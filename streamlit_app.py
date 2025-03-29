@@ -1,6 +1,5 @@
 import streamlit as st
 import numpy as np
-from scipy.stats import t, norm  # Importamos scipy.stats para cálculos estadísticos
 
 # Estilos personalizados
 st.markdown("""
@@ -39,7 +38,19 @@ st.markdown("""
             background-color: #eef1f7;
             border-radius: 10px;
             color: black;
-        }    
+        }
+        .section {
+            margin-top: 30px;
+            padding: 20px;
+            background-color: #f0f2f6;
+            border-radius: 10px;
+        }
+        .submenu {
+            margin: 15px 0;
+            padding: 10px;
+            background-color: #e3e8f0;
+            border-radius: 8px;
+        }
     </style>
 """, unsafe_allow_html=True)
 
@@ -47,104 +58,173 @@ st.markdown("""
 st.markdown('<div class="title">Calculadora Estadística 📊</div>', unsafe_allow_html=True)
 
 # Descripción del Proyecto
-st.markdown('<div class="project-description">Esta aplicación permite realizar cálculos estadísticos como tamaño de muestra e intervalos de confianza.</div>', unsafe_allow_html=True)
+st.markdown('<div class="project-description">Esta aplicación permite calcular diferentes parámetros estadísticos. Selecciona una opción para comenzar.</div>', unsafe_allow_html=True)
 
-# Contenedor de opciones
+# Contenedor de opciones principales
 st.markdown('<div class="container">', unsafe_allow_html=True)
 
 col1, col2 = st.columns(2)
 
 with col1:
     if st.button("📘 Estadística 1", key="estadistica1"):
-        st.session_state["menu"] = "Estadística 1"
+        st.session_state["main_menu"] = "Estadística 1"
 
 with col2:
     if st.button("📗 Estadística 2", key="estadistica2"):
-        st.session_state["menu"] = "Estadística 2"
+        st.session_state["main_menu"] = "Estadística 2"
 
 st.markdown('</div>', unsafe_allow_html=True)
 
-# Manejo de selección de menú
-if "menu" not in st.session_state:
-    st.session_state["menu"] = "Inicio"
+# Manejo de selección de menú principal
+if "main_menu" not in st.session_state:
+    st.session_state["main_menu"] = "Inicio"
+    st.session_state["sub_menu"] = None
 
-if st.session_state["menu"] == "Estadística 1":
+if st.session_state["main_menu"] == "Estadística 1":
     st.subheader("📘 Estadística 1")
-    st.write("Aquí irán los temas de Estadística 1.")
+    st.write("Contenido de Estadística 1 (por implementar)")
 
-elif st.session_state["menu"] == "Estadística 2":
+elif st.session_state["main_menu"] == "Estadística 2":
     st.subheader("📗 Estadística 2")
-
-    # Menú dentro de Estadística 2
-    submenu = st.selectbox("Selecciona una categoría:", ["Tamaño de muestra", "Intervalos de confianza"])
-
-    # Tamaño de muestra
-    if submenu == "Tamaño de muestra":
-        opcion = st.selectbox("Selecciona el cálculo de tamaño de muestra:", [
-            "Población desconocida",
-            "Población conocida",
-            "Estimación de medias (población desconocida)",
-            "Estimación de medias (población conocida)",
-            "Ajuste por pérdidas esperadas"
-        ])
-
-        if opcion == "Población desconocida":
-            Z = st.number_input("Nivel de confianza (Z)", value=1.960, format="%.3f")
-            p = st.number_input("Proporción esperada (p)", value=0.500, format="%.3f")
-            q = 1 - p
-            d = st.number_input("Margen de error (d)", value=0.050, format="%.3f")
-
-            if st.button("Calcular"):
-                n = (Z**2 * p * q) / (d**2)
-                st.write(f"**Tamaño de muestra necesario:** {round(n)}")
-
-        elif opcion == "Población conocida":
-            N = st.number_input("Tamaño de la población (N)", value=1000)
-            Z = st.number_input("Nivel de confianza (Z)", value=1.960, format="%.3f")
-            p = st.number_input("Proporción esperada (p)", value=0.500, format="%.3f")
-            q = 1 - p
-            d = st.number_input("Margen de error (d)", value=0.050, format="%.3f")
-
-            if st.button("Calcular"):
-                num = N * (Z**2 * p * q)
-                den = (d**2 * (N - 1)) + (Z**2 * p * q)
-                n = num / den
-                st.write(f"**Tamaño de muestra necesario:** {round(n)}")
-
-    # Intervalos de confianza
-    elif submenu == "Intervalos de confianza":
-        opcion_ic = st.selectbox("Selecciona el tipo de intervalo:", [
+    
+    # Submenú para Estadística 2
+    st.markdown('<div class="submenu">', unsafe_allow_html=True)
+    sub_col1, sub_col2 = st.columns(2)
+    
+    with sub_col1:
+        if st.button("Intervalos de Confianza", key="intervalos"):
+            st.session_state["sub_menu"] = "Intervalos de Confianza"
+    
+    with sub_col2:
+        if st.button("Tamaños de Muestra", key="tamanos"):
+            st.session_state["sub_menu"] = "Tamaños de Muestra"
+    
+    st.markdown('</div>', unsafe_allow_html=True)
+    
+    # Contenido de Estadística 2
+    if "sub_menu" not in st.session_state:
+        st.session_state["sub_menu"] = None
+    
+    if st.session_state["sub_menu"] == "Intervalos de Confianza":
+        st.markdown('<div class="section">', unsafe_allow_html=True)
+        st.subheader("Intervalos de Confianza")
+        
+        opcion = st.selectbox("Selecciona el tipo de intervalo:", [
             "Intervalo para la media (σ conocida)",
-            "Intervalo para la media (σ desconocida, muestra pequeña)"
+            "Intervalo para la media (σ desconocida)",
+            "Intervalo para la media (muestra pequeña)",
+            "Intervalo para la proporción"
         ])
-
-        if opcion_ic == "Intervalo para la media (σ conocida)":
-            st.subheader("Intervalo de confianza para la media (σ conocida)")
-            media = st.number_input("Media muestral (x̄)", value=50.0, format="%.2f")
-            sigma = st.number_input("Desviación estándar poblacional (σ)", value=5.0, format="%.2f")
-            n = st.number_input("Tamaño de la muestra (n)", value=30, min_value=1)
-            confianza = st.number_input("Nivel de confianza (%)", value=95, min_value=1, max_value=99)
-
+        
+        if opcion == "Intervalo para la media (σ conocida)":
+            media = st.number_input("Media muestral", value=50.0)
+            sigma = st.number_input("Desviación estándar poblacional (σ)", value=10.0)
+            n = st.number_input("Tamaño de muestra (n)", value=30)
+            z = st.number_input("Valor Z (nivel de confianza)", value=1.960, format="%.3f", step=0.001)
+            
             if st.button("Calcular"):
-                alpha = 1 - (confianza / 100)
-                Z = norm.ppf(1 - alpha/2)  # Valor crítico Z
-                margen_error = Z * (sigma / np.sqrt(n))
+                margen_error = z * (sigma / np.sqrt(n))
                 li = media - margen_error
                 ls = media + margen_error
-                st.write(f"**Intervalo de confianza:** ({li:.2f}, {ls:.2f})")
-
-        elif opcion_ic == "Intervalo para la media (σ desconocida, muestra pequeña)":
-            st.subheader("Intervalo de confianza para la media (σ desconocida)")
-            media = st.number_input("Media muestral (x̄)", value=50.0, format="%.2f")
-            s = st.number_input("Desviación estándar muestral (s)", value=5.0, format="%.2f")
-            n = st.number_input("Tamaño de la muestra (n)", value=10, min_value=1)
-            confianza = st.number_input("Nivel de confianza (%)", value=95, min_value=1, max_value=99)
-
+                st.success(f"Intervalo de confianza: ({li:.4f}, {ls:.4f})")
+        
+        elif opcion == "Intervalo para la media (σ desconocida)":
+            media = st.number_input("Media muestral", value=50.0)
+            s = st.number_input("Desviación estándar muestral (s)", value=10.0)
+            n = st.number_input("Tamaño de muestra (n)", value=30)
+            t = st.number_input("Valor t (nivel de confianza)", value=2.045, format="%.3f", step=0.001)
+            
             if st.button("Calcular"):
-                alpha = 1 - (confianza / 100)
-                gl = n - 1  # Grados de libertad
-                t_critico = t.ppf(1 - alpha/2, gl)  # Valor crítico t
-                margen_error = t_critico * (s / np.sqrt(n))
+                margen_error = t * (s / np.sqrt(n))
                 li = media - margen_error
                 ls = media + margen_error
-                st.write(f"**Intervalo de confianza:** ({li:.2f}, {ls:.2f})")
+                st.success(f"Intervalo de confianza: ({li:.4f}, {ls:.4f})")
+        
+        elif opcion == "Intervalo para la media (muestra pequeña)":
+            media = st.number_input("Media muestral", value=50.0)
+            s = st.number_input("Desviación estándar muestral (s)", value=10.0)
+            n = st.number_input("Tamaño de muestra (n)", value=10)
+            t = st.number_input("Valor t (nivel de confianza)", value=2.262, format="%.3f", step=0.001)
+            
+            if st.button("Calcular"):
+                margen_error = t * (s / np.sqrt(n))
+                li = media - margen_error
+                ls = media + margen_error
+                st.success(f"Intervalo de confianza: ({li:.4f}, {ls:.4f})")
+        
+        elif opcion == "Intervalo para la proporción":
+            p = st.number_input("Proporción muestral (p)", value=0.50, format="%.3f")
+            n = st.number_input("Tamaño de muestra (n)", value=100)
+            z = st.number_input("Valor Z (nivel de confianza)", value=1.960, format="%.3f", step=0.001)
+            
+            if st.button("Calcular"):
+                margen_error = z * np.sqrt((p * (1 - p)) / n)
+                li = p - margen_error
+                ls = p + margen_error
+                st.success(f"Intervalo de confianza: ({li:.4f}, {ls:.4f})")
+        
+        st.markdown('</div>', unsafe_allow_html=True)
+    
+    elif st.session_state["sub_menu"] == "Tamaños de Muestra":
+        st.markdown('<div class="section">', unsafe_allow_html=True)
+        st.subheader("Tamaños de Muestra")
+        
+        opcion = st.selectbox("Selecciona el tipo de cálculo:", [
+            "Población desconocida (proporciones)",
+            "Población conocida (proporciones)",
+            "Población desconocida (medias)",
+            "Población conocida (medias)",
+            "Ajuste por pérdidas"
+        ])
+        
+        if opcion == "Población desconocida (proporciones)":
+            Z = st.number_input("Nivel de confianza (Z)", value=1.960, format="%.3f", step=0.001)
+            p = st.number_input("Proporción esperada (p)", value=0.500, format="%.3f")
+            d = st.number_input("Margen de error (d)", value=0.050, format="%.3f")
+            
+            if st.button("Calcular"):
+                n = (Z**2 * p * (1-p)) / (d**2)
+                st.success(f"**Tamaño de muestra necesario:** {round(n)}")
+        
+        elif opcion == "Población conocida (proporciones)":
+            N = st.number_input("Tamaño población (N)", value=1000)
+            Z = st.number_input("Nivel de confianza (Z)", value=1.960, format="%.3f", step=0.001)
+            p = st.number_input("Proporción esperada (p)", value=0.500, format="%.3f")
+            d = st.number_input("Margen de error (d)", value=0.050, format="%.3f")
+            
+            if st.button("Calcular"):
+                num = N * (Z**2 * p * (1-p))
+                den = (d**2 * (N - 1)) + (Z**2 * p * (1-p))
+                n = num / den
+                st.success(f"**Tamaño de muestra necesario:** {round(n)}")
+        
+        elif opcion == "Población desconocida (medias)":
+            Z = st.number_input("Nivel de confianza (Z)", value=1.960, format="%.3f", step=0.001)
+            s = st.number_input("Desviación estándar (s)", value=1.000, format="%.3f")
+            d = st.number_input("Margen de error (d)", value=0.050, format="%.3f")
+            
+            if st.button("Calcular"):
+                n = (Z**2 * s**2) / (d**2)
+                st.success(f"**Tamaño de muestra necesario:** {round(n)}")
+        
+        elif opcion == "Población conocida (medias)":
+            N = st.number_input("Tamaño población (N)", value=1000)
+            Z = st.number_input("Nivel de confianza (Z)", value=1.960, format="%.3f", step=0.001)
+            s = st.number_input("Desviación estándar (s)", value=1.000, format="%.3f")
+            d = st.number_input("Margen de error (d)", value=0.050, format="%.3f")
+            
+            if st.button("Calcular"):
+                num = N * (Z**2 * s**2)
+                den = (d**2 * (N - 1)) + (Z**2 * s**2)
+                n = num / den
+                st.success(f"**Tamaño de muestra necesario:** {round(n)}")
+        
+        elif opcion == "Ajuste por pérdidas":
+            n = st.number_input("Tamaño inicial (n)", value=100)
+            pe = st.number_input("Pérdidas esperadas (decimal)", value=0.100, format="%.3f")
+            
+            if st.button("Calcular"):
+                nc = n / (1 - pe)
+                st.success(f"**Tamaño ajustado:** {round(nc)}")
+        
+        st.markdown('</div>', unsafe_allow_html=True)
