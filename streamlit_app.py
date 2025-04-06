@@ -278,7 +278,7 @@ elif st.session_state["main_menu"] == "Estadística 2":
             
             col1, col2 = st.columns(2)
             with col1:
-                n_datos = st.number_input("Número de datos", min_value=1, max_value=1000, value=30)
+                n_datos = st.number_input("Número de datos", min_value=1, max_value=10000, value=30)
                 decimales = st.number_input("Decimales", min_value=0, max_value=6, value=2)
             with col2:
                 min_val = st.number_input("Valor mínimo", value=0.0)
