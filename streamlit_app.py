@@ -82,7 +82,7 @@ st.markdown("""
             padding: 15px;
             margin-top: 15px;
             border-left: 4px solid #4A90E2;
-            color-text: black;
+            text-color: black;
         }
     </style>
 """, unsafe_allow_html=True)
