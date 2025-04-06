@@ -31,13 +31,6 @@ st.markdown("""
             gap: 20px;
             margin-bottom: 30px;
         }
-        .submenu-container {
-            background: linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%);
-            border-radius: 12px;
-            padding: 15px;
-            margin-bottom: 30px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-        }
         .submenu {
             display: flex;
             flex-wrap: wrap;
