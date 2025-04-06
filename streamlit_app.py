@@ -63,7 +63,7 @@ st.markdown("""
             border: 1px solid #e0e0e0;
         }
         .result-box {
-            background-color: #A9A9A9;
+            background-color: #30302e;
             border-radius: 8px;
             padding: 15px;
             margin-top: 15px;
