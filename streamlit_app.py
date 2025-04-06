@@ -77,12 +77,11 @@ st.markdown("""
             border: 1px solid #e0e0e0;
         }
         .result-box {
-            background-color: #f8f9fa;
+            background-color: #000000;
             border-radius: 8px;
             padding: 15px;
             margin-top: 15px;
             border-left: 4px solid #4A90E2;
-            text-color: black;
         }
     </style>
 """, unsafe_allow_html=True)
