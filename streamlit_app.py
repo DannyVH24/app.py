@@ -126,7 +126,7 @@ elif st.session_state["main_menu"] == "Estadística 2":
     sub_options = {
         "📏 Intervalos": "Intervalos de Confianza",
         "🔍 Tamaños Muestra": "Tamaños de Muestra",
-        "📊 Generar Tabla de Datos": "Generar Tabla de Datos",
+        "📊 Generar Tabla": "Generar Tabla",
         "📈 Est. con Datos": "Estimación con Datos"
     }
     
