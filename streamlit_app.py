@@ -61,14 +61,7 @@ st.markdown("""
             color: white;
             border-color: #4A90E2;
         }
-        .section {
-            background-color: white;
-            border-radius: 12px;
-            padding: 25px;
-            margin-bottom: 30px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-            border: 1px solid #e0e0e0;
-        }
+       
         .data-table {
             margin-top: 20px;
             max-height: 400px;
