@@ -515,7 +515,7 @@ elif st.session_state["main_menu"] == "Estadística 2":
                         <p>H₁: {tipo_prueba.split("(")[1].split(")")[0]}</p>
                         
                         <p><strong>Estadístico de prueba:</strong> χ² = {chi2:.4f}</p>
-                        <p><strong>Valor crítico:</strong> {crit_value:.4f if "Bilateral" not in tipo_prueba else f"{crit_value_l:.4f} y {crit_value_r:.4f}"}</p>
+                        <p><strong>Valor crítico:</strong> {crit_value:.4f if "Bilateral" not in tipo_prueba else f"{crit_value_l:.4f} y {crit_value_r:.4f}"}</p>                     
                         <p><strong>Decisión:</strong> {decision}</p>
                     </div>
                     ''', unsafe_allow_html=True)
