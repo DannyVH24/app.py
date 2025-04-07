@@ -4,7 +4,6 @@ import pandas as pd
 import math
 from scipy import stats
 
-
 # Configuración de página
 st.set_page_config(layout="wide")
 
@@ -56,7 +55,6 @@ st.markdown("""
             color: white;
             border-color: #4A90E2;
         }
-       
         .data-table {
             margin-top: 20px;
             max-height: 400px;
@@ -122,7 +120,7 @@ if st.session_state["main_menu"] == "Estadística 1":
 elif st.session_state["main_menu"] == "Estadística 2":
     st.subheader("📗 Estadística 2")
     
-    # Submenú para Estadística 2 (ahora con 5 opciones)
+    # Submenú para Estadística 2
     st.markdown('<div class="submenu-container">', unsafe_allow_html=True)
     st.markdown('<div class="submenu">', unsafe_allow_html=True)
     
@@ -145,7 +143,7 @@ elif st.session_state["main_menu"] == "Estadística 2":
     if "sub_menu" not in st.session_state:
         st.session_state["sub_menu"] = None
     
-    # 1. Sección original de Intervalos de Confianza
+    # 1. Intervalos de Confianza
     if st.session_state["sub_menu"] == "Intervalos de Confianza":
         st.markdown('<div class="section">', unsafe_allow_html=True)
         st.subheader("📏 Intervalos de Confianza")
@@ -210,7 +208,7 @@ elif st.session_state["main_menu"] == "Estadística 2":
         
         st.markdown('</div>', unsafe_allow_html=True)
     
-    # 2. Sección original de Tamaños de Muestra
+    # 2. Tamaños de Muestra
     elif st.session_state["sub_menu"] == "Tamaños de Muestra":
         st.markdown('<div class="section">', unsafe_allow_html=True)
         st.subheader("🔍 Tamaños de Muestra")
@@ -274,7 +272,7 @@ elif st.session_state["main_menu"] == "Estadística 2":
         
         st.markdown('</div>', unsafe_allow_html=True)
     
-    # 3. Nueva sección para Generar Datos
+    # 3. Generar Datos
     elif st.session_state["sub_menu"] == "Generar Datos":
         with st.container():
             st.markdown('<div class="section">', unsafe_allow_html=True)
@@ -300,7 +298,6 @@ elif st.session_state["main_menu"] == "Estadística 2":
                         "Valor": datos_redondeados
                     })
                     
-                    # Calcular parámetros poblacionales
                     st.session_state.data_params = {
                         "media_poblacional": np.mean(datos_aleatorios),
                         "desv_poblacional": np.std(datos_aleatorios),
@@ -321,7 +318,6 @@ elif st.session_state["main_menu"] == "Estadística 2":
                 </div>
                 ''', unsafe_allow_html=True)
                 
-                # Opción para descargar
                 csv = st.session_state.generated_data.to_csv(index=False).encode('utf-8')
                 st.download_button(
                     "Descargar CSV",
@@ -333,7 +329,7 @@ elif st.session_state["main_menu"] == "Estadística 2":
             
             st.markdown('</div>', unsafe_allow_html=True)
     
-    # 4. Nueva sección para Estimación con Datos Generados
+    # 4. Estimación con Datos
     elif st.session_state["sub_menu"] == "Estimación con Datos":
         with st.container():
             st.markdown('<div class="section">', unsafe_allow_html=True)
@@ -356,7 +352,6 @@ elif st.session_state["main_menu"] == "Estadística 2":
                 </div>
                 ''', unsafe_allow_html=True)
                 
-                # Opciones de análisis
                 analisis = st.selectbox("Selecciona el tipo de análisis:", [
                     "Estimación de Media",
                     "Tamaño de Muestra para Media",
@@ -446,12 +441,11 @@ elif st.session_state["main_menu"] == "Estadística 2":
             
             st.markdown('</div>', unsafe_allow_html=True)
     
-    # 5. Nueva sección para Pruebas de Hipótesis
+    # 5. Pruebas de Hipótesis
     elif st.session_state["sub_menu"] == "Hipótesis":
         st.markdown('<div class="section">', unsafe_allow_html=True)
         st.subheader("📋 Pruebas de Hipótesis")
         
-        # Submenú para tipos de pruebas de hipótesis
         st.markdown('<div class="submenu">', unsafe_allow_html=True)
         
         hipotesis_options = {
@@ -465,7 +459,6 @@ elif st.session_state["main_menu"] == "Estadística 2":
         
         st.markdown('</div>', unsafe_allow_html=True)
         
-        # Manejo del submenú de hipótesis
         if "hipotesis_submenu" not in st.session_state:
             st.session_state["hipotesis_submenu"] = None
         
@@ -492,10 +485,8 @@ elif st.session_state["main_menu"] == "Estadística 2":
                 submit_button = st.form_submit_button("Realizar prueba")
                 
                 if submit_button:
-                    # Calcular estadístico de prueba
                     chi2 = (n - 1) * s2 / sigma2_0
                     
-                    # Determinar valor crítico
                     if tipo_prueba == "Unilateral derecha (H₁: σ² > σ₀²)":
                         crit_value = stats.chi2.ppf(1 - alpha, n - 1)
                         decision = "Rechazar H₀" if chi2 > crit_value else "No rechazar H₀"
@@ -507,7 +498,6 @@ elif st.session_state["main_menu"] == "Estadística 2":
                         crit_value_r = stats.chi2.ppf(1 - alpha/2, n - 1)
                         decision = "Rechazar H₀" if (chi2 < crit_value_l or chi2 > crit_value_r) else "No rechazar H₀"
                     
-                    # Mostrar resultados
                     st.markdown(f'''
                     <div class="result-box">
                         <p><strong>Hipótesis:</strong></p>
@@ -515,7 +505,7 @@ elif st.session_state["main_menu"] == "Estadística 2":
                         <p>H₁: {tipo_prueba.split("(")[1].split(")")[0]}</p>
                         
                         <p><strong>Estadístico de prueba:</strong> χ² = {chi2:.4f}</p>
-                        <p><strong>Valor crítico:</strong> {crit_value:.4f if "Bilateral" not in tipo_prueba else f"{crit_value_l:.4f} y {crit_value_r:.4f}"}</p>                     
+                        <p><strong>Valor crítico:</strong> {crit_value:.4f if "Bilateral" not in tipo_prueba else f"{crit_value_l:.4f} y {crit_value_r:.4f}"}</p>
                         <p><strong>Decisión:</strong> {decision}</p>
                     </div>
                     ''', unsafe_allow_html=True)
@@ -546,11 +536,8 @@ elif st.session_state["main_menu"] == "Estadística 2":
                 
                 if submit_button:
                     p_hat = x / n
-                    
-                    # Calcular estadístico de prueba
                     z = (p_hat - p_0) / math.sqrt(p_0 * (1 - p_0) / n)
                     
-                    # Determinar valor crítico
                     if tipo_prueba == "Unilateral derecha (H₁: p > p₀)":
                         crit_value = stats.norm.ppf(1 - alpha)
                         decision = "Rechazar H₀" if z > crit_value else "No rechazar H₀"
@@ -561,7 +548,6 @@ elif st.session_state["main_menu"] == "Estadística 2":
                         crit_value = stats.norm.ppf(1 - alpha/2)
                         decision = "Rechazar H₀" if abs(z) > crit_value else "No rechazar H₀"
                     
-                    # Mostrar resultados
                     st.markdown(f'''
                     <div class="result-box">
                         <p><strong>Hipótesis:</strong></p>
