@@ -591,8 +591,8 @@ st.markdown(f"""
 <div style='border:1px solid #ccc; padding:10px; margin-bottom:10px;'>
     <h4>Hipótesis</h4>
     <ul>
-        <li><strong>H₀:</strong> p = {p_0:.4f}</li>
-        <li><strong>H₁:</strong> {tipo_prueba.split('(')[1].split(')')[0]}</li>
+        <li><strong>H&#8320;:</strong> p = {p_0:.4f}</li>
+        <li><strong>H&#8321;:</strong> {tipo_prueba.split('(')[1].split(')')[0]}</li>
     </ul>
 </div>
 
@@ -613,7 +613,7 @@ st.markdown(f"""
 <div style='border:1px solid #ccc; padding:10px; margin-bottom:10px;'>
     <h4>Valor crítico</h4>
     <ul>
-        <li><strong>{"Valor crítico:" if "Bilateral" not in tipo_prueba else "Valor crítico (±)"}:</strong> {"±" if "Bilateral" in tipo_prueba else ""}{crit_value:.4f}</li>
+        <li><strong>{"Valor crítico (±)" if "Bilateral" in tipo_prueba else "Valor crítico"}:</strong> {"±" if "Bilateral" in tipo_prueba else ""}{crit_value:.4f}</li>
     </ul>
 </div>
 
@@ -624,3 +624,4 @@ st.markdown(f"""
     </ul>
 </div>
 """, unsafe_allow_html=True)
+
