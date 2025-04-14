@@ -586,23 +586,41 @@ elif st.session_state["hipotesis_submenu"] == "Hipotesis Proporcion":
                 crit_value = stats.norm.ppf(1 - alpha/2)
                 decision = "Rechazar H₀" if abs(z) > crit_value else "No rechazar H₀"
 
-            # Mostrar resultados con Markdown
-            st.markdown(f'''
-            **Hipótesis**:
-            - H₀: p = {p_0:.4f}
-            - H₁: {tipo_prueba.split("(")[1].split(")")[0]}
+           # Mostrar resultados en cuadros separados
+st.markdown(f"""
+<div style='border:1px solid #ccc; padding:10px; margin-bottom:10px;'>
+    <h4>Hipótesis</h4>
+    <ul>
+        <li><strong>H₀:</strong> p = {p_0:.4f}</li>
+        <li><strong>H₁:</strong> {tipo_prueba.split('(')[1].split(')')[0]}</li>
+    </ul>
+</div>
 
-            **Proporción muestral**:
-            - p̂ = {p_hat:.4f}
+<div style='border:1px solid #ccc; padding:10px; margin-bottom:10px;'>
+    <h4>Proporción muestral</h4>
+    <ul>
+        <li><strong>p̂:</strong> {p_hat:.4f}</li>
+    </ul>
+</div>
 
-            **Estadístico de prueba**:
-            - Z = {z:.4f}
+<div style='border:1px solid #ccc; padding:10px; margin-bottom:10px;'>
+    <h4>Estadístico de prueba</h4>
+    <ul>
+        <li><strong>Z:</strong> {z:.4f}</li>
+    </ul>
+</div>
 
-            **Valor crítico**:
-            - {"±" if "Bilateral" in tipo_prueba else ""}{crit_value:.4f}
+<div style='border:1px solid #ccc; padding:10px; margin-bottom:10px;'>
+    <h4>Valor crítico</h4>
+    <ul>
+        <li><strong>{"Valor crítico:" if "Bilateral" not in tipo_prueba else "Valor crítico (±)"}:</strong> {"±" if "Bilateral" in tipo_prueba else ""}{crit_value:.4f}</li>
+    </ul>
+</div>
 
-            **Decisión**:
-            - {decision}
-            ''')
-
-        st.markdown('</div>', unsafe_allow_html=True)
+<div style='border:1px solid #ccc; padding:10px; margin-bottom:10px;'>
+    <h4>Decisión</h4>
+    <ul>
+        <li><strong>Decisión:</strong> {decision}</li>
+    </ul>
+</div>
+""", unsafe_allow_html=True)
