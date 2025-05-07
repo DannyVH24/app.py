@@ -5,7 +5,7 @@ import math
 from scipy import stats
 
 
-# Configuración de página
+# Configuración de página...
 st.set_page_config(layout="wide")
 
 # Estilos personalizados
