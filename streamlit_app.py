@@ -4,7 +4,7 @@ import pandas as pd
 import math
 from scipy import stats
 #hola
-
+#COMO ESTAS?
 # Configuración de página...
 st.set_page_config(layout="wide")
 
