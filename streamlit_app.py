@@ -549,124 +549,117 @@ elif st.session_state["main_menu"] == "Estadística 2":
                     """, unsafe_allow_html=True)
         
         st.markdown('</div>', unsafe_allow_html=True)
-    
- # 6. Sección de Regresión
-elif st.session_state["sub_menu"] == "Regresión":
+   
+
+
+# 6. Sección de Regresión
+if st.session_state.get("sub_menu") == "Regresión":
     st.markdown('<div class="regression-section">', unsafe_allow_html=True)
     st.subheader("📈 Análisis de Regresión")
-
+    
     data_source = st.radio("Fuente de datos:", ["Subir Excel", "Ingreso manual", "Datos aleatorios"])
-    df = None
-
+    
+    # Cargar o crear df según fuente, y guardar en session_state
     if data_source == "Subir Excel":
-        uploaded_file = st.file_uploader("Subir archivo Excel (.xlsx)", type=["xlsx"])
+        uploaded_file = st.file_uploader("Subir archivo Excel", type=["xlsx", "xls"])
         if uploaded_file:
-            try:
-                df = pd.read_excel(uploaded_file, engine='openpyxl')
-                if "x" in df.columns and "y" in df.columns:
-                    st.session_state.regression_data = df
-                    st.success("Datos cargados correctamente.")
-                else:
-                    st.error("El archivo debe contener columnas 'x' y 'y'.")
-                    df = None
-            except Exception as e:
-                st.error(f"Error al leer el archivo: {str(e)}")
-
+            df = pd.read_excel(uploaded_file)
+            if st.button("Cargar datos"):
+                st.session_state.regression_data = df
     elif data_source == "Ingreso manual":
         n_points = st.number_input("Número de puntos", min_value=2, value=5)
         df_input = pd.DataFrame({"x": [0.0]*n_points, "y": [0.0]*n_points})
-        edited_df = st.data_editor(df_input, num_rows="dynamic")
-        if st.button("Guardar Datos Manuales"):
-            df = edited_df.dropna()
+        df = st.data_editor(df_input, num_rows="dynamic")
+        if st.button("Guardar datos manuales"):
             st.session_state.regression_data = df
-
-    else:  # Datos aleatorios
+    else:
         col1, col2 = st.columns(2)
         with col1:
             n_random = st.number_input("N puntos aleatorios", min_value=10, value=20)
-            min_x = st.number_input("Mínimo X", value=1.0)
+            min_x = st.number_input("Mínimo X", value=0.0)
             max_x = st.number_input("Máximo X", value=100.0)
         with col2:
-            min_y = st.number_input("Mínimo Y", value=1.0)
+            min_y = st.number_input("Mínimo Y", value=0.0)
             max_y = st.number_input("Máximo Y", value=100.0)
-
-        if st.button("Generar"):
-            if min_x >= max_x or min_y >= max_y:
-                st.error("Los valores mínimos deben ser menores que los máximos")
-            else:
-                x = np.random.uniform(min_x, max_x, n_random)
-                y = np.random.uniform(min_y, max_y, n_random)
-                df = pd.DataFrame({"x": x, "y": y})
-                st.session_state.regression_data = df
-                st.success("Datos aleatorios generados.")
-
+        if st.button("Generar datos aleatorios"):
+            x = np.random.uniform(min_x, max_x, n_random)
+            y = np.random.uniform(min_y, max_y, n_random)
+            df = pd.DataFrame({"x": x, "y": y})
+            st.session_state.regression_data = df
+    
+    # Mostrar tabla si hay datos guardados
     if "regression_data" in st.session_state:
         df = st.session_state.regression_data
-        st.subheader("Datos de Entrada")
-        st.dataframe(df, use_container_width=True)
-
-        if st.button("Calcular Modelo"):
-            try:
-                x = df["x"].values
-                y = df["y"].values
-
-                model_type = st.selectbox("Tipo de modelo", ["Lineal", "Exponencial", "Logarítmico"])
-
-                if model_type == "Lineal":
-                    slope, intercept = np.polyfit(x, y, 1)
-                    y_pred = slope * x + intercept
-                    equation = f"y = {slope:.4f}x + {intercept:.4f}"
-
-                elif model_type == "Exponencial":
-                    if (y <= 0).any():
-                        st.error("Valores Y deben ser positivos para el modelo exponencial.")
-                        st.stop()
-                    log_y = np.log(y)
-                    slope, intercept = np.polyfit(x, log_y, 1)
-                    a = np.exp(intercept)
-                    b = slope
-                    y_pred = a * np.exp(b * x)
-                    equation = f"y = {a:.4f}e^({b:.4f}x)"
-
-                else:  # Logarítmico
-                    if (x <= 0).any():
-                        st.error("Valores X deben ser positivos para el modelo logarítmico.")
-                        st.stop()
-                    log_x = np.log(x)
-                    slope, intercept = np.polyfit(log_x, y, 1)
-                    y_pred = slope * log_x + intercept
-                    equation = f"y = {slope:.4f}ln(x) + {intercept:.4f}"
-
-                r = np.corrcoef(x, y)[0, 1]
-                r2 = r ** 2
-
-                st.markdown(f'''
-                <div class="result-box">
-                    <p><strong>Modelo:</strong> {equation}</p>
-                    <p><strong>Coeficiente de correlación (r):</strong> {r:.4f}</p>
-                    <p><strong>R²:</strong> {r2:.4f}</p>
-                </div>
-                ''', unsafe_allow_html=True)
-
-                # Gráfica
-                fig, ax = plt.subplots()
-                ax.scatter(x, y, color='#4A90E2', label='Datos')
-                ax.plot(x, y_pred, color='#FF6B6B', label='Modelo')
-                ax.set_xlabel("X")
-                ax.set_ylabel("Y")
-                ax.legend()
-                st.pyplot(fig)
-
-                # Exportar CSV
-                csv = df.to_csv(index=False).encode('utf-8')
-                st.download_button("📥 Descargar datos", csv, "datos_regresion.csv", "text/csv")
-
-                # Exportar imagen
-                buf = BytesIO()
-                fig.savefig(buf, format="png")
-                st.download_button("📷 Descargar gráfico", buf.getvalue(), "grafico.png", "image/png")
-
-            except Exception as e:
-                st.error(f"Error al calcular el modelo: {str(e)}")
-
+        st.write("Datos actuales:")
+        st.dataframe(df)
+    else:
+        df = None
+    
+    # Selección del modelo fuera del botón "Calcular"
+    model_type = st.selectbox("Tipo de modelo", ["Lineal", "Exponencial", "Logarítmico"])
+    
+    if df is not None and st.button("Calcular"):
+        try:
+            x = df["x"].values
+            y = df["y"].values
+            
+            # Ordenar x y y para gráfica ordenada
+            order = np.argsort(x)
+            x = x[order]
+            y = y[order]
+            
+            if model_type == "Lineal":
+                slope, intercept = np.polyfit(x, y, 1)
+                y_pred = slope * x + intercept
+                equation = f"y = {slope:.4f}x + {intercept:.4f}"
+            elif model_type == "Exponencial":
+                if (y <= 0).any():
+                    st.error("Valores Y deben ser positivos para modelo exponencial")
+                    st.stop()
+                log_y = np.log(y)
+                slope, intercept = np.polyfit(x, log_y, 1)
+                a = np.exp(intercept)
+                b = slope
+                y_pred = a * np.exp(b * x)
+                equation = f"y = {a:.4f}e^({b:.4f}x)"
+            else:
+                if (x <= 0).any():
+                    st.error("Valores X deben ser positivos para modelo logarítmico")
+                    st.stop()
+                log_x = np.log(x)
+                slope, intercept = np.polyfit(log_x, y, 1)
+                y_pred = slope * log_x + intercept
+                equation = f"y = {slope:.4f}ln(x) + {intercept:.4f}"
+            
+            r = np.corrcoef(x, y)[0,1]
+            
+            st.markdown(f'''
+            <div class="result-box">
+                <p><strong>Modelo:</strong> {equation}</p>
+                <p><strong>Correlación (r):</strong> {r:.4f}</p>
+                <p><strong>R²:</strong> {r**2:.4f}</p>
+            </div>
+            ''', unsafe_allow_html=True)
+            
+            fig, ax = plt.subplots()
+            ax.scatter(x, y, color='#4A90E2', label='Datos')
+            ax.plot(x, y_pred, color='#FF6B6B', label='Modelo')
+            ax.set_xlabel("X")
+            ax.set_ylabel("Y")
+            ax.legend()
+            st.pyplot(fig)
+            
+            # Exportar datos con predicción
+            df_export = df.copy()
+            df_export["y_pred"] = y_pred
+            csv = df_export.to_csv(index=False).encode('utf-8')
+            st.download_button("Descargar datos", csv, "datos_regresion.csv", "text/csv")
+            
+            buf = BytesIO()
+            fig.savefig(buf, format="png")
+            st.download_button("Descargar gráfico", buf.getvalue(), "grafico.png", "image/png")
+            
+        except Exception as e:
+            st.error(f"Error: {str(e)}")
+    
     st.markdown('</div>', unsafe_allow_html=True)
