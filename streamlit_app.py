@@ -119,6 +119,10 @@ if st.session_state["main_menu"] == "Estadística 1":
     st.subheader("📘 Estadística 1")
     st.write("Contenido de Estadística 1 (por implementar)")
 
+#AGREGAR UN SUBMENU CON LOS TEMAS DEL AÑO PASADO ASÍ COMO ESTA EN EL APARTADO DE ESTADISTICA 2
+
+
+
 elif st.session_state["main_menu"] == "Estadística 2":
     st.subheader("📗 Estadística 2")
     
