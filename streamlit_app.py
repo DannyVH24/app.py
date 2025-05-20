@@ -551,7 +551,7 @@ elif st.session_state["main_menu"] == "Estadística 2":
         st.markdown('</div>', unsafe_allow_html=True)
    
 
-
+#REVISAR LOS DATOS DE LA EXPONECILA Y LA LOGARITMICA EN CORRELACION Y R2
 # 6. Sección de Regresión
 if st.session_state.get("sub_menu") == "Regresión":
     st.markdown('<div class="regression-section">', unsafe_allow_html=True)
