@@ -9,7 +9,8 @@ from sklearn.linear_model import LinearRegression
 import statsmodels.api as sm
 from scipy.stats import f as f_dist
 
-# Configuración de página
+
+# Configuración de página.
 st.set_page_config(layout="wide")
 
 # Estilos personalizados
