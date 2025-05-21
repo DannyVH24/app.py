@@ -556,16 +556,19 @@ elif st.session_state["main_menu"] == "Estadística 2":
 if st.session_state.get("sub_menu") == "Regresión":
     st.markdown('<div class="regression-section">', unsafe_allow_html=True)
     st.subheader("📈 Análisis de Regresión")
-    
+
     data_source = st.radio("Fuente de datos:", ["Subir Excel", "Ingreso manual", "Datos aleatorios"])
-    
+
     # Cargar o crear df según fuente, y guardar en session_state
     if data_source == "Subir Excel":
         uploaded_file = st.file_uploader("Subir archivo Excel", type=["xlsx", "xls"])
         if uploaded_file:
-            df = pd.read_excel(uploaded_file)
-            if st.button("Cargar datos"):
+            try:
+                df = pd.read_excel(uploaded_file)
                 st.session_state.regression_data = df
+                st.success("✅ Datos cargados exitosamente desde el Excel.")
+            except Exception as e:
+                st.error(f"❌ Error al leer el archivo: {e}")
     elif data_source == "Ingreso manual":
         n_points = st.number_input("Número de puntos", min_value=2, value=5)
         df_input = pd.DataFrame({"x": [0.0]*n_points, "y": [0.0]*n_points})
@@ -586,35 +589,35 @@ if st.session_state.get("sub_menu") == "Regresión":
             y = np.random.uniform(min_y, max_y, n_random)
             df = pd.DataFrame({"x": x, "y": y})
             st.session_state.regression_data = df
-    
+
     # Mostrar tabla si hay datos guardados
     if "regression_data" in st.session_state:
         df = st.session_state.regression_data
-        st.write("Datos actuales:")
+        st.write("📋 **Datos actuales:**")
         st.dataframe(df)
     else:
         df = None
-    
+
     # Selección del modelo fuera del botón "Calcular"
     model_type = st.selectbox("Tipo de modelo", ["Lineal", "Exponencial", "Logarítmico"])
-    
+
     if df is not None and st.button("Calcular"):
         try:
             x = df["x"].values
             y = df["y"].values
-            
+
             # Ordenar x y y para gráfica ordenada
             order = np.argsort(x)
             x = x[order]
             y = y[order]
-            
+
             if model_type == "Lineal":
                 slope, intercept = np.polyfit(x, y, 1)
                 y_pred = slope * x + intercept
                 equation = f"y = {slope:.4f}x + {intercept:.4f}"
             elif model_type == "Exponencial":
                 if (y <= 0).any():
-                    st.error("Valores Y deben ser positivos para modelo exponencial")
+                    st.error("❌ Valores Y deben ser positivos para modelo exponencial")
                     st.stop()
                 log_y = np.log(y)
                 slope, intercept = np.polyfit(x, log_y, 1)
@@ -624,15 +627,15 @@ if st.session_state.get("sub_menu") == "Regresión":
                 equation = f"y = {a:.4f}e^({b:.4f}x)"
             else:
                 if (x <= 0).any():
-                    st.error("Valores X deben ser positivos para modelo logarítmico")
+                    st.error("❌ Valores X deben ser positivos para modelo logarítmico")
                     st.stop()
                 log_x = np.log(x)
                 slope, intercept = np.polyfit(log_x, y, 1)
                 y_pred = slope * log_x + intercept
                 equation = f"y = {slope:.4f}ln(x) + {intercept:.4f}"
-            
-            r = np.corrcoef(x, y)[0,1]
-            
+
+            r = np.corrcoef(x, y)[0, 1]
+
             st.markdown(f'''
             <div class="result-box">
                 <p><strong>Modelo:</strong> {equation}</p>
@@ -640,7 +643,7 @@ if st.session_state.get("sub_menu") == "Regresión":
                 <p><strong>R²:</strong> {r**2:.4f}</p>
             </div>
             ''', unsafe_allow_html=True)
-            
+
             fig, ax = plt.subplots()
             ax.scatter(x, y, color='#4A90E2', label='Datos')
             ax.plot(x, y_pred, color='#FF6B6B', label='Modelo')
@@ -648,18 +651,18 @@ if st.session_state.get("sub_menu") == "Regresión":
             ax.set_ylabel("Y")
             ax.legend()
             st.pyplot(fig)
-            
+
             # Exportar datos con predicción
             df_export = df.copy()
             df_export["y_pred"] = y_pred
             csv = df_export.to_csv(index=False).encode('utf-8')
-            st.download_button("Descargar datos", csv, "datos_regresion.csv", "text/csv")
-            
+            st.download_button("📄 Descargar datos", csv, "datos_regresion.csv", "text/csv")
+
             buf = BytesIO()
             fig.savefig(buf, format="png")
-            st.download_button("Descargar gráfico", buf.getvalue(), "grafico.png", "image/png")
-            
+            st.download_button("🖼️ Descargar gráfico", buf.getvalue(), "grafico.png", "image/png")
+
         except Exception as e:
-            st.error(f"Error: {str(e)}")
-    
+            st.error(f"❌ Error: {str(e)}")
+
     st.markdown('</div>', unsafe_allow_html=True)
