@@ -132,6 +132,20 @@ st.markdown('</div>', unsafe_allow_html=True)
 if st.session_state["main_menu"] == "Estadística 1":
     st.subheader("📘 Estadística 1")
 
+    st.markdown('<div class="submenu-container">', unsafe_allow_html=True)
+    st.markdown('<div class="submenu">', unsafe_allow_html=True)
+
+    sub_options = {
+        "📏 Intervalos": "Intervalos de Confianza"
+    }
+
+    for label, key in sub_options.items():
+        if st.button(label):
+            st.session_state["sub_menu"] = key
+
+    st.markdown('</div>', unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True)
+
 elif st.session_state["main_menu"] == "Estadística 2":
     st.subheader("📗 Estadística 2")
 
