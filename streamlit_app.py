@@ -139,7 +139,7 @@ elif st.session_state["main_menu"] == "Estadística 2":
     st.markdown('<div class="submenu">', unsafe_allow_html=True)
 
     sub_options = {
-        "🔏 Intervalos": "Intervalos de Confianza",
+        "📏 Intervalos": "Intervalos de Confianza",
         "🔍 Tamaños Muestra": "Tamaños de Muestra",
         "📊 Generar Datos": "Generar Datos",
         "📈 Est. con Datos": "Estimación con Datos",
