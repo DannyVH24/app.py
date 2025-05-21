@@ -136,7 +136,9 @@ if st.session_state["main_menu"] == "Estadística 1":
     st.markdown('<div class="submenu">', unsafe_allow_html=True)
 
     sub_options = {
-        "📏 Intervalos": "Intervalos de Confianza"
+        "📊 Medidas de tendencia central": " Medidas de tendencia central",
+        "📈 Medidas de posición": " Medidas de posición",
+        "📉 Medidas de dispersión o variabilidad": " Medidas de dispersión o variabilidad"
     }
 
     for label, key in sub_options.items():
