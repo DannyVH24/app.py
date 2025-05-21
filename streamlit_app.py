@@ -13,6 +13,7 @@ from scipy.stats import f as f_dist
 # Configuración de página.
 st.set_page_config(layout="wide")
 
+
 # Estilos personalizados
 st.markdown("""
     <style>
