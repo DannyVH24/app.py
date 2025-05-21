@@ -123,6 +123,7 @@ if st.session_state["main_menu"] == "Estadística 1":
     st.subheader("📘 Estadística 1")
     st.write("Contenido de Estadística 1 (por implementar)")
 
+
 elif st.session_state["main_menu"] == "Estadística 2":
     st.subheader("📗 Estadística 2")
     
@@ -554,7 +555,7 @@ elif st.session_state["main_menu"] == "Estadística 2":
 #REVISAR LOS DATOS DE LA EXPONECILA Y LA LOGARITMICA EN CORRELACION Y R2
 # 6. Sección de Regresión
 if st.session_state.get("sub_menu") == "Regresión":
-    st.markdown('<div class="regression-section">', unsafe_allow_html=True)
+    st.markdown('<div class="section">', unsafe_allow_html=True)
     st.subheader("📈 Análisis de Regresión")
 
     data_source = st.radio("Fuente de datos:", ["Subir Excel", "Ingreso manual", "Datos aleatorios"])
@@ -615,6 +616,9 @@ if st.session_state.get("sub_menu") == "Regresión":
                 slope, intercept = np.polyfit(x, y, 1)
                 y_pred = slope * x + intercept
                 equation = f"y = {slope:.4f}x + {intercept:.4f}"
+                r = np.corrcoef(x, y)[0, 1]
+                r2 = r**2
+
             elif model_type == "Exponencial":
                 if (y <= 0).any():
                     st.error("❌ Valores Y deben ser positivos para modelo exponencial")
@@ -625,7 +629,16 @@ if st.session_state.get("sub_menu") == "Regresión":
                 b = slope
                 y_pred = a * np.exp(b * x)
                 equation = f"y = {a:.4f}e^({b:.4f}x)"
-            else:
+
+                # Correlación en espacio transformado (solo informativa)
+                r = np.corrcoef(x, log_y)[0, 1]
+
+                # R² en el espacio original
+                ss_res = np.sum((y - y_pred) ** 2)
+                ss_tot = np.sum((y - np.mean(y)) ** 2)
+                r2 = 1 - (ss_res / ss_tot)
+
+            else:  # Logarítmico
                 if (x <= 0).any():
                     st.error("❌ Valores X deben ser positivos para modelo logarítmico")
                     st.stop()
@@ -633,14 +646,14 @@ if st.session_state.get("sub_menu") == "Regresión":
                 slope, intercept = np.polyfit(log_x, y, 1)
                 y_pred = slope * log_x + intercept
                 equation = f"y = {slope:.4f}ln(x) + {intercept:.4f}"
-
-            r = np.corrcoef(x, y)[0, 1]
+                r = np.corrcoef(log_x, y)[0, 1]
+                r2 = r**2
 
             st.markdown(f'''
             <div class="result-box">
                 <p><strong>Modelo:</strong> {equation}</p>
                 <p><strong>Correlación (r):</strong> {r:.4f}</p>
-                <p><strong>R²:</strong> {r**2:.4f}</p>
+                <p><strong>R²:</strong> {r2:.4f}</p>
             </div>
             ''', unsafe_allow_html=True)
 
