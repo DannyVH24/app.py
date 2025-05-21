@@ -157,7 +157,7 @@ elif st.session_state["main_menu"] == "Estadística 2":
 
     # 1. Sección de Intervalos de Confianza
     if st.session_state["sub_menu"] == "Intervalos de Confianza":
-        st.subheader("🔏 Intervalos de Confianza")
+        st.subheader("📏 Intervalos de Confianza")
 
         opcion = st.selectbox("Selecciona el tipo de intervalo:", [
             "Intervalo para la media (σ conocida)",
