@@ -5,6 +5,9 @@ import math
 import matplotlib.pyplot as plt
 from scipy import stats
 from io import BytesIO
+from sklearn.linear_model import LinearRegression
+import statsmodels.api as sm
+from scipy.stats import f as f_dist
 
 # Configuración de página
 st.set_page_config(layout="wide")
@@ -80,7 +83,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# Funciones para valores críticos
+# Funciones auxiliares
 def get_z_value(confidence):
     z_table = {80: 1.282, 85: 1.440, 90: 1.645, 95: 1.960, 99: 2.576}
     return z_table.get(confidence, 1.960)
@@ -92,25 +95,7 @@ def get_t_value(confidence, df):
     }
     return t_table.get(confidence, {}).get(min(df, 10), 2.0)
 
-# Título principal
-st.markdown('<div class="title">Calculadora Estadística 📊</div>', unsafe_allow_html=True)
-
-# Descripción del Proyecto
-st.markdown('<div class="project-description">Esta aplicación permite calcular diferentes parámetros estadísticos. Selecciona una opción para comenzar.</div>', unsafe_allow_html=True)
-
-# Contenedor de opciones principales
-st.markdown('<div class="main-menu">', unsafe_allow_html=True)
-
-col1, col2 = st.columns(2)
-with col1:
-    if st.button("📘 Estadística 1", key="estadistica1"):
-        st.session_state["main_menu"] = "Estadística 1"
-with col2:
-    if st.button("📗 Estadística 2", key="estadistica2"):
-        st.session_state["main_menu"] = "Estadística 2"
-st.markdown('</div>', unsafe_allow_html=True)
-
-# Manejo de selección de menú principal
+# Inicialización de estado
 if "main_menu" not in st.session_state:
     st.session_state["main_menu"] = "Inicio"
     st.session_state["sub_menu"] = None
@@ -118,103 +103,120 @@ if "main_menu" not in st.session_state:
     st.session_state["generated_data"] = None
     st.session_state["data_params"] = {}
     st.session_state["regression_data"] = None
+    st.session_state["bimulti_file"] = None
+    st.session_state["bimulti_text_header"] = None
+    st.session_state["bimulti_df"] = None
+    st.session_state["bimulti_y"] = None
+    st.session_state["bimulti_x"] = None
 
+# Título y descripción
+st.markdown('<div class="title">Calculadora Estadística 📊</div>', unsafe_allow_html=True)
+st.markdown('<div class="project-description">Esta aplicación permite calcular diferentes parámetros estadísticos. Selecciona una opción para comenzar.</div>', unsafe_allow_html=True)
+
+# Menú principal
+st.markdown('<div class="main-menu">', unsafe_allow_html=True)
+col1, col2 = st.columns(2)
+with col1:
+    if st.button("📘 Estadística 1", key="estadistica1"):
+        st.session_state["main_menu"] = "Estadística 1"
+        st.session_state["sub_menu"] = None
+with col2:
+    if st.button("📗 Estadística 2", key="estadistica2"):
+        st.session_state["main_menu"] = "Estadística 2"
+        st.session_state["sub_menu"] = None
+st.markdown('</div>', unsafe_allow_html=True)
+
+# Contenido según el menú
 if st.session_state["main_menu"] == "Estadística 1":
     st.subheader("📘 Estadística 1")
     st.write("Contenido de Estadística 1 (por implementar)")
 
-
 elif st.session_state["main_menu"] == "Estadística 2":
     st.subheader("📗 Estadística 2")
-    
-    # Submenú corregido
+
     st.markdown('<div class="submenu-container">', unsafe_allow_html=True)
     st.markdown('<div class="submenu">', unsafe_allow_html=True)
-    
+
     sub_options = {
-        "📏 Intervalos": "Intervalos de Confianza",
+        "🔏 Intervalos": "Intervalos de Confianza",
         "🔍 Tamaños Muestra": "Tamaños de Muestra",
         "📊 Generar Datos": "Generar Datos",
         "📈 Est. con Datos": "Estimación con Datos",
         "📋 Hipótesis": "Hipótesis",
-        "📈 Regresión": "Regresión"
+        "📈 Regresión": "Regresión",
+        "📋 BiVar y MultiVar": "BiMultiVar"
     }
-    
+
     for label, key in sub_options.items():
-        if st.button(label, key=key):
+        if st.button(label):
             st.session_state["sub_menu"] = key
-    
+
     st.markdown('</div>', unsafe_allow_html=True)
     st.markdown('</div>', unsafe_allow_html=True)
-    
-    # Contenido de Estadística 2
-    if "sub_menu" not in st.session_state:
-        st.session_state["sub_menu"] = None
-    
+
     # 1. Sección de Intervalos de Confianza
     if st.session_state["sub_menu"] == "Intervalos de Confianza":
-        st.markdown('<div class="section">', unsafe_allow_html=True)
-        st.subheader("📏 Intervalos de Confianza")
-        
+        st.subheader("🔏 Intervalos de Confianza")
+
         opcion = st.selectbox("Selecciona el tipo de intervalo:", [
             "Intervalo para la media (σ conocida)",
             "Intervalo para la media (σ desconocida)",
             "Intervalo para la media (muestra pequeña)",
             "Intervalo para la proporción"
         ])
-        
+
         if opcion == "Intervalo para la media (σ conocida)":
             media = st.number_input("Media muestral", value=50.0)
             sigma = st.number_input("Desviación estándar poblacional (σ)", value=10.0)
             n = st.number_input("Tamaño de muestra (n)", value=30)
             confianza = st.selectbox("Nivel de confianza", [90, 95, 99], index=1)
             z = get_z_value(confianza)
-            
+
             if st.button("Calcular"):
                 margen_error = z * (sigma / math.sqrt(n))
                 li = media - margen_error
                 ls = media + margen_error
                 st.markdown(f'<div class="result-box">Intervalo de confianza al {confianza}%: <strong>({li:.4f}, {ls:.4f})</strong></div>', unsafe_allow_html=True)
-        
+
         elif opcion == "Intervalo para la media (σ desconocida)":
             media = st.number_input("Media muestral", value=50.0)
             s = st.number_input("Desviación estándar muestral (s)", value=10.0)
             n = st.number_input("Tamaño de muestra (n)", value=30)
             confianza = st.selectbox("Nivel de confianza", [90, 95, 99], index=1)
             t_val = get_t_value(confianza, n-1)
-            
+
             if st.button("Calcular"):
                 margen_error = t_val * (s / math.sqrt(n))
                 li = media - margen_error
                 ls = media + margen_error
                 st.markdown(f'<div class="result-box">Intervalo de confianza al {confianza}%: <strong>({li:.4f}, {ls:.4f})</strong></div>', unsafe_allow_html=True)
-        
+
         elif opcion == "Intervalo para la media (muestra pequeña)":
             media = st.number_input("Media muestral", value=50.0)
             s = st.number_input("Desviación estándar muestral (s)", value=10.0)
             n = st.number_input("Tamaño de muestra (n)", value=10)
             confianza = st.selectbox("Nivel de confianza", [90, 95, 99], index=1)
             t_val = get_t_value(confianza, n-1)
-            
+
             if st.button("Calcular"):
                 margen_error = t_val * (s / math.sqrt(n))
                 li = media - margen_error
                 ls = media + margen_error
                 st.markdown(f'<div class="result-box">Intervalo de confianza al {confianza}%: <strong>({li:.4f}, {ls:.4f})</strong></div>', unsafe_allow_html=True)
-        
+
         elif opcion == "Intervalo para la proporción":
             p = st.number_input("Proporción muestral (p)", value=0.50, format="%.3f")
             n = st.number_input("Tamaño de muestra (n)", value=100)
             confianza = st.selectbox("Nivel de confianza", [90, 95, 99], index=1)
             z = get_z_value(confianza)
-            
+
             if st.button("Calcular"):
                 margen_error = z * math.sqrt((p * (1 - p)) / n)
                 li = p - margen_error
                 ls = p + margen_error
                 st.markdown(f'<div class="result-box">Intervalo de confianza al {confianza}%: <strong>({li:.4f}, {ls:.4f})</strong></div>', unsafe_allow_html=True)
-        
-        st.markdown('</div>', unsafe_allow_html=True)
+
+
     
     # 2. Sección de Tamaños de Muestra
     elif st.session_state["sub_menu"] == "Tamaños de Muestra":
@@ -237,7 +239,7 @@ elif st.session_state["main_menu"] == "Estadística 2":
             d = st.number_input("Margen de error (d)", value=0.050, format="%.3f")
             
             if st.button("Calcular"):
-                n = (Z**2 * p * (1-p)) / (d**2)
+                n = (Z*2 * p * (1-p)) / (d*2)
                 st.markdown(f'<div class="result-box">Tamaño de muestra necesario: <strong>{math.ceil(n)}</strong></div>', unsafe_allow_html=True)
         
         elif opcion == "Población conocida (proporciones)":
@@ -247,7 +249,7 @@ elif st.session_state["main_menu"] == "Estadística 2":
             
             if st.button("Calcular"):
                 num = N * (Z**2 * p * (1-p))
-                den = (d**2 * (N - 1)) + (Z**2 * p * (1-p))
+                den = (d*2 * (N - 1)) + (Z*2 * p * (1-p))
                 n = num / den
                 st.markdown(f'<div class="result-box">Tamaño de muestra necesario: <strong>{math.ceil(n)}</strong> ({(math.ceil(n)/N*100):.1f}% de la población)</div>', unsafe_allow_html=True)
         
@@ -265,8 +267,8 @@ elif st.session_state["main_menu"] == "Estadística 2":
             d = st.number_input("Margen de error (d)", value=0.050, format="%.3f")
             
             if st.button("Calcular"):
-                num = N * (Z**2 * s**2)
-                den = (d**2 * (N - 1)) + (Z**2 * s**2)
+                num = N * (Z*2 * s*2)
+                den = (d**2 * (N - 1)) + (Z**2 * s*2)
                 n = num / den
                 st.markdown(f'<div class="result-box">Tamaño de muestra necesario: <strong>{math.ceil(n)}</strong> ({(math.ceil(n)/N*100):.1f}% de la población)</div>', unsafe_allow_html=True)
         
@@ -397,8 +399,8 @@ elif st.session_state["main_menu"] == "Estadística 2":
                         s = st.session_state.data_params["desv_poblacional"]
                         Z = get_z_value(confianza)
                         
-                        num = N * (Z**2 * s**2)
-                        den = (error**2 * (N - 1)) + (Z**2 * s**2)
+                        num = N * (Z*2 * s*2)
+                        den = (error**2 * (N - 1)) + (Z**2 * s*2)
                         n_necesario = num / den
                         
                         st.markdown(f'''
@@ -436,7 +438,7 @@ elif st.session_state["main_menu"] == "Estadística 2":
                         Z = get_z_value(confianza)
                         
                         num = N * (Z**2 * p_esperada * (1-p_esperada))
-                        den = (error**2 * (N - 1)) + (Z**2 * p_esperada * (1-p_esperada))
+                        den = (error*2 * (N - 1)) + (Z*2 * p_esperada * (1-p_esperada))
                         n_necesario = num / den
                         
                         st.markdown(f'''
@@ -552,7 +554,6 @@ elif st.session_state["main_menu"] == "Estadística 2":
         st.markdown('</div>', unsafe_allow_html=True)
    
 
-#REVISAR LOS DATOS DE LA EXPONECILA Y LA LOGARITMICA EN CORRELACION Y R2
 # 6. Sección de Regresión
 if st.session_state.get("sub_menu") == "Regresión":
     st.markdown('<div class="section">', unsafe_allow_html=True)
@@ -679,3 +680,119 @@ if st.session_state.get("sub_menu") == "Regresión":
             st.error(f"❌ Error: {str(e)}")
 
     st.markdown('</div>', unsafe_allow_html=True)
+
+
+
+# 7 BiMultiVarible
+
+if st.session_state.get("sub_menu") == "BiMultiVar":
+    st.markdown('<div class="section">', unsafe_allow_html=True)
+    st.subheader("📋 Análisis BiVar y MultiVar")
+
+    uploaded_file = st.file_uploader("Sube un archivo Excel con explicación y datos", type=["xlsx", "xls"])
+    if uploaded_file:
+        try:
+            import statsmodels.api as sm
+            from io import BytesIO
+            from scipy.stats import f as f_dist
+
+            xls = pd.ExcelFile(uploaded_file)
+            df_raw = pd.read_excel(xls, sheet_name=0, header=None)
+
+            # Detectar encabezado automáticamente
+            data_start_idx = None
+            for i, row in df_raw.iterrows():
+                if row.apply(lambda x: isinstance(x, (int, float, np.number)) or pd.isna(x)).all():
+                    data_start_idx = i - 1
+                    break
+
+            if data_start_idx is None or data_start_idx < 0:
+                st.error("No se detectaron encabezados válidos.")
+                st.stop()
+
+            df_data = pd.read_excel(xls, sheet_name=0, header=data_start_idx)
+
+            if df_data.empty or df_data.shape[1] < 2:
+                st.error("El archivo debe contener al menos dos columnas de datos.")
+                st.stop()
+
+            # Limpieza automática de símbolos como "$" y "," en TODAS las columnas
+            for col in df_data.columns:
+                df_data[col] = pd.to_numeric(df_data[col].astype(str).str.replace(r'[\$,]', '', regex=True), errors='ignore')
+
+            st.success("Datos cargados correctamente.")
+            st.dataframe(df_data)
+
+            # Selección dinámica de variables
+            columnas_numericas = df_data.select_dtypes(include=[np.number]).columns.tolist()
+            if len(columnas_numericas) < 2:
+                st.error("Se requieren al menos dos columnas numéricas.")
+                st.stop()
+
+            y_var = st.selectbox("Selecciona la variable dependiente (Y)", columnas_numericas)
+            x_vars = st.multiselect("Selecciona una o más variables independientes (X)", [col for col in columnas_numericas if col != y_var])
+
+            if not x_vars:
+                st.warning("Debes seleccionar al menos una variable independiente.")
+                st.stop()
+
+            # Modelado
+            X = df_data[x_vars]
+            y = df_data[y_var]
+            X_const = sm.add_constant(X)
+            model = sm.OLS(y, X_const).fit()
+
+            # Lógica tipo Excel
+            n = len(y)
+            k = len(x_vars)
+            y_mean = np.mean(y)
+            y_pred = model.fittedvalues
+            residuals = model.resid
+
+            SSR = np.sum((y - y_pred)**2)  # SC Residuos
+            SSE = np.sum((y_pred - y_mean)**2)  # SC Regresión
+            SST = SSR + SSE  # SC Total
+
+            R2 = SSE / SST
+            R = np.sqrt(R2)
+            R2_adj = 1 - (SSR / (n - k - 1)) / (SST / (n - 1))
+            std_error = np.sqrt(SSR / (n - k - 1))
+
+            MSR = SSE / k
+            MSE = SSR / (n - k - 1)
+            F = MSR / MSE
+            p_value = 1 - f_dist.cdf(F, k, n - k - 1)
+
+            # Mostrar resumen
+            st.markdown("### Estadísticas de la regresión (lógica de Excel)")
+            st.markdown(f"""
+                - *Coef. de correlación múltiple:* {R * 100:.2f} %  
+                - *Coef. de determinación (R²):* {R2 * 100:.2f} %  
+                - *R² ajustado:* {R2_adj * 100:.2f} %  
+                - *Error típico:* {std_error:.4f}  
+                - *Observaciones:* {n}
+            """)
+
+            st.markdown("### ANÁLISIS DE VARIANZA (Excel)")
+            anova_df = pd.DataFrame({
+                "Grados de libertad": [k, n - k - 1, n - 1],
+                "Suma de cuadrados": [SSE, SSR, SST],
+                "Promedio de los cuadrados": [MSR, MSE, np.nan],
+                "F": [F, np.nan, np.nan],
+                "Valor crítico de F": [p_value, np.nan, np.nan]
+            }, index=["Regresión", "Residuos", "Total"])
+            st.dataframe(anova_df.style.format(na_rep="", formatter="{:.4f}".format))
+
+            st.markdown("### Coeficientes del modelo")
+            coef_df = pd.DataFrame({
+                "Coeficientes": model.params,
+                "Error típico": model.bse,
+                "Estadístico t": model.tvalues,
+                "Probabilidad": model.pvalues,
+                "Inferior 95.0%": model.conf_int()[0],
+                "Superior 95.0%": model.conf_int()[1],
+            })
+            st.dataframe(coef_df.style.format("{:.4f}"))
+
+        except Exception as e:
+            st.error(f"Error al procesar archivo o análisis: {e}")
