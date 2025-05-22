@@ -136,9 +136,9 @@ if st.session_state["main_menu"] == "Estadística 1":
     st.markdown('<div class="submenu">', unsafe_allow_html=True)
 
     sub_options = {
-        "📊 Medidas de tendencia central": " Medidas de tendencia central",
-        "📈 Medidas de posición": " Medidas de posición",
-        "📉 Medidas de dispersión o variabilidad": " Medidas de dispersión o variabilidad"
+        "📊 Medidas de tendencia central": "Medidas de tendencia central",
+        "📈 Medidas de posición": "Medidas de posición",
+        "📉 Medidas de dispersión o variabilidad": "Medidas de dispersión o variabilidad"
     }
 
     for label, key in sub_options.items():
@@ -171,92 +171,67 @@ elif st.session_state["main_menu"] == "Estadística 2":
     st.markdown('</div>', unsafe_allow_html=True)
     st.markdown('</div>', unsafe_allow_html=True)
 
-     # 1. Sección de Medidas de tendencia central
-if st.session_state["sub_menu"] == "Medidas de tendencia central":
-    st.subheader("📏 Medidas de tendencia central")
+ # 1. ESTADISTICA: Sección de Intervalos de Confianza
+    if st.session_state["sub_menu"] == "Medidas de tendencia central":
+        st.subheader("📏 Medidas de tendencia central")
 
-    opcion = st.selectbox("Selecciona el tipo de análisis:", [
-        "Media, Mediana y Moda",
-        "Intervalo para la media (σ conocida)",
-        "Intervalo para la media (σ desconocida)",
-        "Intervalo para la media (muestra pequeña)",
-        "Intervalo para la proporción"
-    ])
+        opcion = st.selectbox("Selecciona el tipo de intervalo:", [
+            "Intervalo para la media (σ conocida)",
+            "Intervalo para la media (σ desconocida)",
+            "Intervalo para la media (muestra pequeña)",
+            "Intervalo para la proporción"
+        ])
 
-    if opcion == "Media, Mediana y Moda":
-        st.markdown("Ingresa los datos separados por comas:")
-        datos_input = st.text_input("Ejemplo: 4, 5, 6, 7, 8, 8, 9")
-        
-        if st.button("Calcular"):
-            try:
-                datos = [float(x.strip()) for x in datos_input.split(",")]
-                media = statistics.mean(datos)
-                mediana = statistics.median(datos)
-                try:
-                    moda = statistics.mode(datos)
-                except statistics.StatisticsError:
-                    moda = "No hay una sola moda"
+        if opcion == "Intervalo para la media (σ conocida)":
+            media = st.number_input("Media muestral", value=50.0)
+            sigma = st.number_input("Desviación estándar poblacional (σ)", value=10.0)
+            n = st.number_input("Tamaño de muestra (n)", value=30)
+            confianza = st.selectbox("Nivel de confianza", [90, 95, 99], index=1)
+            z = get_z_value(confianza)
 
-                st.markdown(f"""
-                <div class="result-box">
-                    <strong>Media:</strong> {media:.4f}<br>
-                    <strong>Mediana:</strong> {mediana:.4f}<br>
-                    <strong>Moda:</strong> {moda}
-                </div>
-                """, unsafe_allow_html=True)
-            except:
-                st.error("Por favor ingresa una lista válida de números separados por comas.")
+            if st.button("Calcular"):
+                margen_error = z * (sigma / math.sqrt(n))
+                li = media - margen_error
+                ls = media + margen_error
+                st.markdown(f'<div class="result-box">Intervalo de confianza al {confianza}%: <strong>({li:.4f}, {ls:.4f})</strong></div>', unsafe_allow_html=True)
 
-    elif opcion == "Intervalo para la media (σ conocida)":
-        media = st.number_input("Media muestral", value=50.0)
-        sigma = st.number_input("Desviación estándar poblacional (σ)", value=10.0)
-        n = st.number_input("Tamaño de muestra (n)", value=30)
-        confianza = st.selectbox("Nivel de confianza", [90, 95, 99], index=1)
-        z = get_z_value(confianza)
+        elif opcion == "Intervalo para la media (σ desconocida)":
+            media = st.number_input("Media muestral", value=50.0)
+            s = st.number_input("Desviación estándar muestral (s)", value=10.0)
+            n = st.number_input("Tamaño de muestra (n)", value=30)
+            confianza = st.selectbox("Nivel de confianza", [90, 95, 99], index=1)
+            t_val = get_t_value(confianza, n-1)
 
-        if st.button("Calcular"):
-            margen_error = z * (sigma / math.sqrt(n))
-            li = media - margen_error
-            ls = media + margen_error
-            st.markdown(f'<div class="result-box">Intervalo de confianza al {confianza}%: <strong>({li:.4f}, {ls:.4f})</strong></div>', unsafe_allow_html=True)
+            if st.button("Calcular"):
+                margen_error = t_val * (s / math.sqrt(n))
+                li = media - margen_error
+                ls = media + margen_error
+                st.markdown(f'<div class="result-box">Intervalo de confianza al {confianza}%: <strong>({li:.4f}, {ls:.4f})</strong></div>', unsafe_allow_html=True)
 
-    elif opcion == "Intervalo para la media (σ desconocida)":
-        media = st.number_input("Media muestral", value=50.0)
-        s = st.number_input("Desviación estándar muestral (s)", value=10.0)
-        n = st.number_input("Tamaño de muestra (n)", value=30)
-        confianza = st.selectbox("Nivel de confianza", [90, 95, 99], index=1)
-        t_val = get_t_value(confianza, n-1)
+        elif opcion == "Intervalo para la media (muestra pequeña)":
+            media = st.number_input("Media muestral", value=50.0)
+            s = st.number_input("Desviación estándar muestral (s)", value=10.0)
+            n = st.number_input("Tamaño de muestra (n)", value=10)
+            confianza = st.selectbox("Nivel de confianza", [90, 95, 99], index=1)
+            t_val = get_t_value(confianza, n-1)
 
-        if st.button("Calcular"):
-            margen_error = t_val * (s / math.sqrt(n))
-            li = media - margen_error
-            ls = media + margen_error
-            st.markdown(f'<div class="result-box">Intervalo de confianza al {confianza}%: <strong>({li:.4f}, {ls:.4f})</strong></div>', unsafe_allow_html=True)
+            if st.button("Calcular"):
+                margen_error = t_val * (s / math.sqrt(n))
+                li = media - margen_error
+                ls = media + margen_error
+                st.markdown(f'<div class="result-box">Intervalo de confianza al {confianza}%: <strong>({li:.4f}, {ls:.4f})</strong></div>', unsafe_allow_html=True)
 
-    elif opcion == "Intervalo para la media (muestra pequeña)":
-        media = st.number_input("Media muestral", value=50.0)
-        s = st.number_input("Desviación estándar muestral (s)", value=10.0)
-        n = st.number_input("Tamaño de muestra (n)", value=10)
-        confianza = st.selectbox("Nivel de confianza", [90, 95, 99], index=1)
-        t_val = get_t_value(confianza, n-1)
+        elif opcion == "Intervalo para la proporción":
+            p = st.number_input("Proporción muestral (p)", value=0.50, format="%.3f")
+            n = st.number_input("Tamaño de muestra (n)", value=100)
+            confianza = st.selectbox("Nivel de confianza", [90, 95, 99], index=1)
+            z = get_z_value(confianza)
 
-        if st.button("Calcular"):
-            margen_error = t_val * (s / math.sqrt(n))
-            li = media - margen_error
-            ls = media + margen_error
-            st.markdown(f'<div class="result-box">Intervalo de confianza al {confianza}%: <strong>({li:.4f}, {ls:.4f})</strong></div>', unsafe_allow_html=True)
-
-    elif opcion == "Intervalo para la proporción":
-        p = st.number_input("Proporción muestral (p)", value=0.50, format="%.3f")
-        n = st.number_input("Tamaño de muestra (n)", value=100)
-        confianza = st.selectbox("Nivel de confianza", [90, 95, 99], index=1)
-        z = get_z_value(confianza)
-
-        if st.button("Calcular"):
-            margen_error = z * math.sqrt((p * (1 - p)) / n)
-            li = p - margen_error
-            ls = p + margen_error
-            st.markdown(f'<div class="result-box">Intervalo de confianza al {confianza}%: <strong>({li:.4f}, {ls:.4f})</strong></div>', unsafe_allow_html=True)
+            if st.button("Calcular"):
+                margen_error = z * math.sqrt((p * (1 - p)) / n)
+                li = p - margen_error
+                ls = p + margen_error
+                st.markdown(f'<div class="result-box">Intervalo de confianza al {confianza}%: <strong>({li:.4f}, {ls:.4f})</strong></div>', unsafe_allow_html=True)
 
 
     # 1. Sección de Intervalos de Confianza
