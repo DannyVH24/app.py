@@ -172,8 +172,9 @@ elif st.session_state["main_menu"] == "Estadística 2":
     st.markdown('</div>', unsafe_allow_html=True)
 
  # 1. ESTADISTICA: Sección de Intervalos de Confianza
+ 
     if st.session_state["sub_menu"] == "Medidas de tendencia central":
-        st.subheader("📏 Medidas de tendencia central")
+        st.subheader("📊 Medidas de tendencia central")
 
         opcion = st.selectbox("Selecciona el tipo de intervalo:", [
             "Intervalo para la media (σ conocida)",
