@@ -2,6 +2,7 @@ import streamlit as st
 import numpy as np
 import pandas as pd
 import math
+import statistics
 import matplotlib.pyplot as plt
 from scipy import stats
 from io import BytesIO
@@ -143,11 +144,84 @@ if st.session_state["main_menu"] == "Estadística 1":
 
     for label, key in sub_options.items():
         if st.button(label):
-            st.session_state["sub_menu"] = key
+            st.session_state["sub_menu2"] = key
 
     st.markdown('</div>', unsafe_allow_html=True)
     st.markdown('</div>', unsafe_allow_html=True)
 
+     # 1. ESTADISTICA: Sección de Intervalos de Confianza
+    if st.session_state.get("sub_menu2") == "Medidas de tendencia central":
+        st.subheader("📊 Medidas de tendencia central")
+
+    # Explicación general
+    st.markdown("""
+    Las **medidas de tendencia central** resumen un conjunto de datos con un solo valor representativo.  
+    A continuación puedes calcular:
+    - **Media:** Promedio de todos los valores.
+    - **Mediana:** Valor central cuando los datos están ordenados.
+    - **Moda:** Valor que más se repite.
+    """)
+
+    # Selector de medida
+    opcion = st.selectbox("Selecciona el tipo de medida:", [
+        "Media",
+        "Mediana",
+        "Moda"
+    ])
+
+    # Entrada de datos
+    datos_entrada = st.text_input("Introduce los datos separados por comas (ej: 4, 7, 2, 9)")
+
+    # Botón para procesar
+    if st.button("Calcular"):
+        try:
+            # Convertir a lista de números
+            datos = [float(x.strip()) for x in datos_entrada.split(",") if x.strip() != ""]
+
+            if not datos:
+                st.warning("⚠️ Por favor, introduce al menos un número válido.")
+            else:
+                # Mostrar los datos procesados
+                st.write("📌 Datos ingresados:", datos)
+
+                if opcion == "Media":
+                    suma = sum(datos)
+                    n = len(datos)
+                    resultado = statistics.mean(datos)
+                    st.markdown(f"""
+                        <div class="result-box">
+                        <strong>Cálculo de la media:</strong><br>
+                        Media = (Suma de datos) / (Cantidad de datos) = {suma:.2f} / {n} = <strong>{resultado:.4f}</strong>
+                        </div>
+                    """, unsafe_allow_html=True)
+
+                elif opcion == "Mediana":
+                    datos_ordenados = sorted(datos)
+                    resultado = statistics.median(datos)
+                    st.markdown(f"""
+                        <div class="result-box">
+                        <strong>Cálculo de la mediana:</strong><br>
+                        Datos ordenados: {datos_ordenados}<br>
+                        Mediana = <strong>{resultado:.4f}</strong>
+                        </div>
+                    """, unsafe_allow_html=True)
+
+                elif opcion == "Moda":
+                    try:
+                        resultado = statistics.mode(datos)
+                        st.markdown(f"""
+                            <div class="result-box">
+                            <strong>Cálculo de la moda:</strong><br>
+                            Moda = valor que más se repite = <strong>{resultado:.4f}</strong>
+                            </div>
+                        """, unsafe_allow_html=True)
+                    except statistics.StatisticsError:
+                        st.warning("⚠️ No hay una moda única (varios valores tienen la misma frecuencia).")
+
+        except ValueError:
+            st.error("❌ Error: Asegúrate de ingresar solo números válidos separados por comas.")
+
+# ESTADISTICA 2
 elif st.session_state["main_menu"] == "Estadística 2":
     st.subheader("📗 Estadística 2")
 
@@ -165,75 +239,11 @@ elif st.session_state["main_menu"] == "Estadística 2":
     }
 
     for label, key in sub_options.items():
-        if st.button(label):
+        if st.button(label, key=label):  # Asigna una clave única por botón
             st.session_state["sub_menu"] = key
 
     st.markdown('</div>', unsafe_allow_html=True)
     st.markdown('</div>', unsafe_allow_html=True)
-
- # 1. ESTADISTICA: Sección de Intervalos de Confianza
- 
-    if st.session_state["sub_menu"] == "Medidas de tendencia central":
-        st.subheader("📊 Medidas de tendencia central")
-
-        opcion = st.selectbox("Selecciona el tipo de intervalo:", [
-            "Intervalo para la media (σ conocida)",
-            "Intervalo para la media (σ desconocida)",
-            "Intervalo para la media (muestra pequeña)",
-            "Intervalo para la proporción"
-        ])
-
-        if opcion == "Intervalo para la media (σ conocida)":
-            media = st.number_input("Media muestral", value=50.0)
-            sigma = st.number_input("Desviación estándar poblacional (σ)", value=10.0)
-            n = st.number_input("Tamaño de muestra (n)", value=30)
-            confianza = st.selectbox("Nivel de confianza", [90, 95, 99], index=1)
-            z = get_z_value(confianza)
-
-            if st.button("Calcular"):
-                margen_error = z * (sigma / math.sqrt(n))
-                li = media - margen_error
-                ls = media + margen_error
-                st.markdown(f'<div class="result-box">Intervalo de confianza al {confianza}%: <strong>({li:.4f}, {ls:.4f})</strong></div>', unsafe_allow_html=True)
-
-        elif opcion == "Intervalo para la media (σ desconocida)":
-            media = st.number_input("Media muestral", value=50.0)
-            s = st.number_input("Desviación estándar muestral (s)", value=10.0)
-            n = st.number_input("Tamaño de muestra (n)", value=30)
-            confianza = st.selectbox("Nivel de confianza", [90, 95, 99], index=1)
-            t_val = get_t_value(confianza, n-1)
-
-            if st.button("Calcular"):
-                margen_error = t_val * (s / math.sqrt(n))
-                li = media - margen_error
-                ls = media + margen_error
-                st.markdown(f'<div class="result-box">Intervalo de confianza al {confianza}%: <strong>({li:.4f}, {ls:.4f})</strong></div>', unsafe_allow_html=True)
-
-        elif opcion == "Intervalo para la media (muestra pequeña)":
-            media = st.number_input("Media muestral", value=50.0)
-            s = st.number_input("Desviación estándar muestral (s)", value=10.0)
-            n = st.number_input("Tamaño de muestra (n)", value=10)
-            confianza = st.selectbox("Nivel de confianza", [90, 95, 99], index=1)
-            t_val = get_t_value(confianza, n-1)
-
-            if st.button("Calcular"):
-                margen_error = t_val * (s / math.sqrt(n))
-                li = media - margen_error
-                ls = media + margen_error
-                st.markdown(f'<div class="result-box">Intervalo de confianza al {confianza}%: <strong>({li:.4f}, {ls:.4f})</strong></div>', unsafe_allow_html=True)
-
-        elif opcion == "Intervalo para la proporción":
-            p = st.number_input("Proporción muestral (p)", value=0.50, format="%.3f")
-            n = st.number_input("Tamaño de muestra (n)", value=100)
-            confianza = st.selectbox("Nivel de confianza", [90, 95, 99], index=1)
-            z = get_z_value(confianza)
-
-            if st.button("Calcular"):
-                margen_error = z * math.sqrt((p * (1 - p)) / n)
-                li = p - margen_error
-                ls = p + margen_error
-                st.markdown(f'<div class="result-box">Intervalo de confianza al {confianza}%: <strong>({li:.4f}, {ls:.4f})</strong></div>', unsafe_allow_html=True)
-
 
     # 1. Sección de Intervalos de Confianza
     if st.session_state["sub_menu"] == "Intervalos de Confianza":
