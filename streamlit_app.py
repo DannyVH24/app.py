@@ -149,77 +149,76 @@ if st.session_state["main_menu"] == "Estadística 1":
     st.markdown('</div>', unsafe_allow_html=True)
     st.markdown('</div>', unsafe_allow_html=True)
 
-     # 1. ESTADISTICA: Sección de Intervalos de Confianza
+    # Solo muestra si eligieron "Medidas de tendencia central"
     if st.session_state.get("sub_menu2") == "Medidas de tendencia central":
         st.subheader("📊 Medidas de tendencia central")
 
-    # Explicación general
-    st.markdown("""
-    Las **medidas de tendencia central** resumen un conjunto de datos con un solo valor representativo.  
-    A continuación puedes calcular:
-    - **Media:** Promedio de todos los valores.
-    - **Mediana:** Valor central cuando los datos están ordenados.
-    - **Moda:** Valor que más se repite.
-    """)
+        # Explicación general
+        st.markdown("""
+        A continuación puedes calcular:
+        - **Media:** Promedio de todos los valores.
+        - **Mediana:** Valor central cuando los datos están ordenados.
+        - **Moda:** Valor que más se repite.
+        """)
 
-    # Selector de medida
-    opcion = st.selectbox("Selecciona el tipo de medida:", [
-        "Media",
-        "Mediana",
-        "Moda"
-    ])
+        # Selector de medida
+        opcion = st.selectbox("Selecciona el tipo de medida:", [
+            "Media",
+            "Mediana",
+            "Moda"
+        ])
 
-    # Entrada de datos
-    datos_entrada = st.text_input("Introduce los datos separados por comas (ej: 4, 7, 2, 9)")
+        # Entrada de datos
+        datos_entrada = st.text_input("Introduce los datos separados por comas (ej: 4, 7, 2, 9)")
 
-    # Botón para procesar
-    if st.button("Calcular"):
-        try:
-            # Convertir a lista de números
-            datos = [float(x.strip()) for x in datos_entrada.split(",") if x.strip() != ""]
+        # Botón para procesar
+        if st.button("Calcular"):
+            try:
+                # Convertir a lista de números
+                datos = [float(x.strip()) for x in datos_entrada.split(",") if x.strip() != ""]
 
-            if not datos:
-                st.warning("⚠️ Por favor, introduce al menos un número válido.")
-            else:
-                # Mostrar los datos procesados
-                st.write("📌 Datos ingresados:", datos)
+                if not datos:
+                    st.warning("⚠️ Por favor, introduce al menos un número válido.")
+                else:
+                    st.write("📌 Datos ingresados:", datos)
 
-                if opcion == "Media":
-                    suma = sum(datos)
-                    n = len(datos)
-                    resultado = statistics.mean(datos)
-                    st.markdown(f"""
-                        <div class="result-box">
-                        <strong>Cálculo de la media:</strong><br>
-                        Media = (Suma de datos) / (Cantidad de datos) = {suma:.2f} / {n} = <strong>{resultado:.4f}</strong>
-                        </div>
-                    """, unsafe_allow_html=True)
-
-                elif opcion == "Mediana":
-                    datos_ordenados = sorted(datos)
-                    resultado = statistics.median(datos)
-                    st.markdown(f"""
-                        <div class="result-box">
-                        <strong>Cálculo de la mediana:</strong><br>
-                        Datos ordenados: {datos_ordenados}<br>
-                        Mediana = <strong>{resultado:.4f}</strong>
-                        </div>
-                    """, unsafe_allow_html=True)
-
-                elif opcion == "Moda":
-                    try:
-                        resultado = statistics.mode(datos)
+                    if opcion == "Media":
+                        suma = sum(datos)
+                        n = len(datos)
+                        resultado = statistics.mean(datos)
                         st.markdown(f"""
                             <div class="result-box">
-                            <strong>Cálculo de la moda:</strong><br>
-                            Moda = valor que más se repite = <strong>{resultado:.4f}</strong>
+                            <strong>Cálculo de la media:</strong><br>
+                            Media = (Suma de datos) / (Cantidad de datos) = {suma:.2f} / {n} = <strong>{resultado:.4f}</strong>
                             </div>
                         """, unsafe_allow_html=True)
-                    except statistics.StatisticsError:
-                        st.warning("⚠️ No hay una moda única (varios valores tienen la misma frecuencia).")
 
-        except ValueError:
-            st.error("❌ Error: Asegúrate de ingresar solo números válidos separados por comas.")
+                    elif opcion == "Mediana":
+                        datos_ordenados = sorted(datos)
+                        resultado = statistics.median(datos)
+                        st.markdown(f"""
+                            <div class="result-box">
+                            <strong>Cálculo de la mediana:</strong><br>
+                            Datos ordenados: {datos_ordenados}<br>
+                            Mediana = <strong>{resultado:.4f}</strong>
+                            </div>
+                        """, unsafe_allow_html=True)
+
+                    elif opcion == "Moda":
+                        try:
+                            resultado = statistics.mode(datos)
+                            st.markdown(f"""
+                                <div class="result-box">
+                                <strong>Cálculo de la moda:</strong><br>
+                                Moda = valor que más se repite = <strong>{resultado:.4f}</strong>
+                                </div>
+                            """, unsafe_allow_html=True)
+                        except statistics.StatisticsError:
+                            st.warning("⚠️ No hay una moda única (varios valores tienen la misma frecuencia).")
+
+            except ValueError:
+                st.error("❌ Error: Asegúrate de ingresar solo números válidos separados por comas.")
+
 
 # ESTADISTICA 2
 elif st.session_state["main_menu"] == "Estadística 2":
