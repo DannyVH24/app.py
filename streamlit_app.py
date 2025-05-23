@@ -149,7 +149,8 @@ if st.session_state["main_menu"] == "Estadística 1":
     st.markdown('</div>', unsafe_allow_html=True)
     st.markdown('</div>', unsafe_allow_html=True)
 
-    # Solo muestra si eligieron "Medidas de tendencia central"
+
+    # ESTADISTICA 1. "Medidas de tendencia central"
     if st.session_state.get("sub_menu2") == "Medidas de tendencia central":
         st.subheader("📊 Medidas de tendencia central")
 
@@ -218,6 +219,125 @@ if st.session_state["main_menu"] == "Estadística 1":
 
             except ValueError:
                 st.error("❌ Error: Asegúrate de ingresar solo números válidos separados por comas.")
+
+
+# "Medidas de posición"
+if st.session_state.get("sub_menu2") == "Medidas de posición":
+    st.subheader("📈 Medidas de posición")
+
+    # Explicación general
+    st.markdown("""
+    A continuación puedes calcular:
+    - **Cuartiles (Q1, Q2, Q3):** Dividen los datos en 4 partes iguales.
+    - **Deciles (D1 a D9):** Dividen los datos en 10 partes iguales.
+    - **Percentiles (P1 a P99):** Dividen los datos en 100 partes iguales.
+    """)
+
+    # Selector de medida
+    opcion = st.selectbox("Selecciona el tipo de medida:", [
+        "Cuartil",
+        "Decil",
+        "Percentil"
+    ])
+
+    # Entrada de datos
+    datos_entrada = st.text_input("Introduce los datos separados por comas (ej: 4, 7, 2, 9)")
+
+    # Selector de número (Q1 a Q3, D1 a D9, P1 a P99)
+    if opcion == "Cuartil":
+        posicion = st.selectbox("Selecciona el cuartil:", [1, 2, 3])
+        valor_percentil = posicion * 25
+    elif opcion == "Decil":
+        posicion = st.selectbox("Selecciona el decil:", list(range(1, 10)))
+        valor_percentil = posicion * 10
+    elif opcion == "Percentil":
+        posicion = st.slider("Selecciona el percentil:", 1, 99, step=1)
+        valor_percentil = posicion
+
+    # Botón para procesar
+    if st.button("Calcular"):
+        try:
+            datos = [float(x.strip()) for x in datos_entrada.split(",") if x.strip() != ""]
+            datos_ordenados = sorted(datos)
+
+            if not datos:
+                st.warning("⚠️ Por favor, introduce al menos un número válido.")
+            else:
+                resultado = np.percentile(datos_ordenados, valor_percentil)
+                st.markdown(f"""
+                    <div class="result-box">
+                    <strong>Datos ordenados:</strong> {datos_ordenados}<br>
+                    <strong>{opcion} seleccionado:</strong> {opcion[0]}{posicion}<br>
+                    <strong>Equivale al percentil:</strong> {valor_percentil}%<br>
+                    <strong>Resultado:</strong> <span style="color:green;">{resultado:.4f}</span>
+                    </div>
+                """, unsafe_allow_html=True)
+
+        except ValueError:
+            st.error("❌ Error: Asegúrate de ingresar solo números válidos separados por comas.")
+
+
+
+# "Medidas de dispersión o variabilidad"
+if st.session_state.get("sub_menu2") == "Medidas de dispersión o variabilidad":
+    st.subheader("📉 Medidas de dispersión o variabilidad")
+
+    st.markdown("""
+    A continuación puedes calcular:
+    - **Rango:** Diferencia entre el valor máximo y mínimo.
+    - **Varianza:** Medida del grado de dispersión con respecto a la media.
+    - **Desviación estándar:** Raíz cuadrada de la varianza.
+    - **Coeficiente de variación:** Relación relativa de la desviación estándar y la media, en porcentaje.
+    """)
+
+    # Selector de medida
+    opcion = st.selectbox("Selecciona el tipo de medida:", [
+        "Rango",
+        "Varianza",
+        "Desviación estándar",
+        "Coeficiente de variación"
+    ])
+
+    # Entrada de datos
+    datos_entrada = st.text_input("Introduce los datos separados por comas (ej: 4, 7, 2, 9)")
+
+    # Botón para procesar
+    if st.button("Calcular"):
+        try:
+            datos = [float(x.strip()) for x in datos_entrada.split(",") if x.strip() != ""]
+            datos_ordenados = sorted(datos)
+
+            if not datos:
+                st.warning("⚠️ Por favor, introduce al menos un número válido.")
+            else:
+                st.write("📌 Datos ingresados:", datos_ordenados)
+
+                if opcion == "Rango":
+                    valor = max(datos) - min(datos)
+                    st.markdown(f"**Rango = Máximo - Mínimo = {max(datos)} - {min(datos)} =** <span style='color:blue;'><strong>{valor:.4f}</strong></span>", unsafe_allow_html=True)
+
+                elif opcion == "Varianza":
+                    valor = statistics.variance(datos)
+                    st.markdown(f"**Varianza =** <span style='color:blue;'><strong>{valor:.4f}</strong></span>", unsafe_allow_html=True)
+
+                elif opcion == "Desviación estándar":
+                    valor = statistics.stdev(datos)
+                    st.markdown(f"**Desviación estándar =** <span style='color:blue;'><strong>{valor:.4f}</strong></span>", unsafe_allow_html=True)
+
+                elif opcion == "Coeficiente de variación":
+                    media = statistics.mean(datos)
+                    stdev = statistics.stdev(datos)
+                    coef = (stdev / media) * 100 if media != 0 else float('inf')
+                    st.markdown(f"""
+                        **Media =** {media:.4f}<br>
+                        **Desviación estándar =** {stdev:.4f}<br>
+                        **Coeficiente de variación = (Desv. estándar / Media) × 100 =** 
+                        <span style='color:blue;'><strong>{coef:.2f}%</strong></span>
+                    """, unsafe_allow_html=True)
+
+        except ValueError:
+            st.error("❌ Error: Asegúrate de ingresar solo números válidos separados por comas.")
+
 
 
 # ESTADISTICA 2
