@@ -133,7 +133,7 @@ if "last_main_menu" not in st.session_state:
     st.session_state["last_main_menu"] = st.session_state["main_menu"]
 
 if st.session_state["main_menu"] != st.session_state["last_main_menu"]:
-    st.session_state["sub_menu2"] = None  # o el nombre correcto de tu submenú
+    st.session_state["sub_menu2"] = None  
     st.session_state["last_main_menu"] = st.session_state["main_menu"]
 
 st.markdown('</div>', unsafe_allow_html=True)
@@ -146,8 +146,7 @@ if st.session_state["main_menu"] == "Estadística 1":
     st.markdown('<div class="submenu">', unsafe_allow_html=True)
 
     sub_options = {
-        "📊 Medidas de tendencia central": "Medidas de tendencia central",
-        "📈 Medidas de posición": "Medidas de posición",
+        "📊 Medidas estadísticas" : "Medidas estadísticas",
         "📉 Medidas de dispersión o variabilidad": "Medidas de dispersión o variabilidad"
     }
 
@@ -159,100 +158,36 @@ if st.session_state["main_menu"] == "Estadística 1":
     st.markdown('</div>', unsafe_allow_html=True)
 
 
-    # ESTADISTICA 1. "Medidas de tendencia central"
-    if st.session_state.get("sub_menu2") == "Medidas de tendencia central":
-        st.subheader("📊 Medidas de tendencia central")
+   # ESTADÍSTICA 1 - Todas las medidas en un solo menú
+if st.session_state.get("sub_menu2") == "Medidas estadísticas":
+    st.subheader("📊 Medidas estadísticas (tendencia central y posición)")
 
-        # Explicación general
-        st.markdown("""
-        A continuación puedes calcular:
-        - **Media:** Promedio de todos los valores.
-        - **Mediana:** Valor central cuando los datos están ordenados.
-        - **Moda:** Valor que más se repite.
-        """)
+    st.markdown('<div class="submenu-container">', unsafe_allow_html=True)
+    st.markdown('<div class="submenu">', unsafe_allow_html=True)
 
-        # Selector de medida
-        opcion = st.selectbox("Selecciona el tipo de medida:", [
-            "Media",
-            "Mediana",
-            "Moda"
-        ])
-
-        # Entrada de datos
-        datos_entrada = st.text_input("Introduce los datos separados por comas (ej: 4, 7, 2, 9)")
-
-        # Botón para procesar
-        if st.button("Calcular"):
-            try:
-                # Convertir a lista de números
-                datos = [float(x.strip()) for x in datos_entrada.split(",") if x.strip() != ""]
-
-                if not datos:
-                    st.warning("⚠️ Por favor, introduce al menos un número válido.")
-                else:
-                    st.write("📌 Datos ingresados:", datos)
-
-                    if opcion == "Media":
-                        suma = sum(datos)
-                        n = len(datos)
-                        resultado = statistics.mean(datos)
-                        st.markdown(f"""
-                            <div class="result-box">
-                            <strong>Cálculo de la media:</strong><br>
-                            Media = (Suma de datos) / (Cantidad de datos) = {suma:.2f} / {n} = <strong>{resultado:.4f}</strong>
-                            </div>
-                        """, unsafe_allow_html=True)
-
-                    elif opcion == "Mediana":
-                        datos_ordenados = sorted(datos)
-                        resultado = statistics.median(datos)
-                        st.markdown(f"""
-                            <div class="result-box">
-                            <strong>Cálculo de la mediana:</strong><br>
-                            Datos ordenados: {datos_ordenados}<br>
-                            Mediana = <strong>{resultado:.4f}</strong>
-                            </div>
-                        """, unsafe_allow_html=True)
-
-                    elif opcion == "Moda":
-                        try:
-                            resultado = statistics.mode(datos)
-                            st.markdown(f"""
-                                <div class="result-box">
-                                <strong>Cálculo de la moda:</strong><br>
-                                Moda = valor que más se repite = <strong>{resultado:.4f}</strong>
-                                </div>
-                            """, unsafe_allow_html=True)
-                        except statistics.StatisticsError:
-                            st.warning("⚠️ No hay una moda única (varios valores tienen la misma frecuencia).")
-
-            except ValueError:
-                st.error("❌ Error: Asegúrate de ingresar solo números válidos separados por comas.")
-
-
-# "Medidas de posición"
-if st.session_state.get("sub_menu2") == "Medidas de posición":
-    st.subheader("📈 Medidas de posición")
-
-    # Explicación general
     st.markdown("""
-    A continuación puedes calcular:
-    - **Cuartiles (Q1, Q2, Q3):** Dividen los datos en 4 partes iguales.
-    - **Deciles (D1 a D9):** Dividen los datos en 10 partes iguales.
-    - **Percentiles (P1 a P99):** Dividen los datos en 100 partes iguales.
+    Selecciona una medida estadística para calcular:
+    - **Media, Mediana, Moda** (medidas de tendencia central)
+    - **Cuartiles, Deciles, Percentiles** (medidas de posición)
     """)
 
-    # Selector de medida
-    opcion = st.selectbox("Selecciona el tipo de medida:", [
+    # Menú unificado
+    opcion = st.selectbox("📊 Selecciona el tipo de medida:", [
+        "Media",
+        "Mediana",
+        "Moda",
         "Cuartil",
         "Decil",
         "Percentil"
     ])
 
     # Entrada de datos
-    datos_entrada = st.text_input("Introduce los datos separados por comas (ej: 4, 7, 2, 9)")
+    datos_entrada = st.text_input("📥 Introduce los datos separados por comas (ej: 4, 7, 2, 9)")
 
-    # Selector de número (Q1 a Q3, D1 a D9, P1 a P99)
+    # Selección adicional para medidas de posición
+    valor_percentil = None
+    posicion = None
+
     if opcion == "Cuartil":
         posicion = st.selectbox("Selecciona el cuartil:", [1, 2, 3])
         valor_percentil = posicion * 25
@@ -263,27 +198,59 @@ if st.session_state.get("sub_menu2") == "Medidas de posición":
         posicion = st.slider("Selecciona el percentil:", 1, 99, step=1)
         valor_percentil = posicion
 
-    # Botón para procesar
+    # Botón para calcular
     if st.button("Calcular"):
         try:
             datos = [float(x.strip()) for x in datos_entrada.split(",") if x.strip() != ""]
-            datos_ordenados = sorted(datos)
-
             if not datos:
                 st.warning("⚠️ Por favor, introduce al menos un número válido.")
             else:
-                resultado = np.percentile(datos_ordenados, valor_percentil)
-                st.markdown(f"""
-                    <div class="result-box">
-                    <strong>Datos ordenados:</strong> {datos_ordenados}<br>
-                    <strong>{opcion} seleccionado:</strong> {opcion[0]}{posicion}<br>
-                    <strong>Equivale al percentil:</strong> {valor_percentil}%<br>
-                    <strong>Resultado:</strong> <span style="color:green;">{resultado:.4f}</span>
-                    </div>
-                """, unsafe_allow_html=True)
+                st.write("📌 Datos ingresados:", datos)
+                datos_ordenados = sorted(datos)
+
+                if opcion == "Media":
+                    resultado = statistics.mean(datos)
+                    st.markdown(f"""
+                        <div class="result-box">
+                        <strong>Media:</strong> (Suma de datos) / (Cantidad) = {sum(datos):.2f} / {len(datos)} = <strong>{resultado:.4f}</strong>
+                        </div>
+                    """, unsafe_allow_html=True)
+
+                elif opcion == "Mediana":
+                    resultado = statistics.median(datos)
+                    st.markdown(f"""
+                        <div class="result-box">
+                        <strong>Mediana:</strong> Datos ordenados: {datos_ordenados}<br>
+                        Resultado = <strong>{resultado:.4f}</strong>
+                        </div>
+                    """, unsafe_allow_html=True)
+
+                elif opcion == "Moda":
+                    try:
+                        resultado = statistics.mode(datos)
+                        st.markdown(f"""
+                            <div class="result-box">
+                            <strong>Moda:</strong> Valor que más se repite = <strong>{resultado:.4f}</strong>
+                            </div>
+                        """, unsafe_allow_html=True)
+                    except statistics.StatisticsError:
+                        st.warning("⚠️ No hay una moda única (varios valores tienen la misma frecuencia).")
+
+                elif opcion in ["Cuartil", "Decil", "Percentil"]:
+                    resultado = np.percentile(datos_ordenados, valor_percentil)
+                    st.markdown(f"""
+                        <div class="result-box">
+                        <strong>Datos ordenados:</strong> {datos_ordenados}<br>
+                        <strong>{opcion}:</strong> {opcion[0]}{posicion} equivale al percentil {valor_percentil}%<br>
+                        <strong>Resultado:</strong> <span style="color:green;">{resultado:.4f}</span>
+                        </div>
+                    """, unsafe_allow_html=True)
 
         except ValueError:
             st.error("❌ Error: Asegúrate de ingresar solo números válidos separados por comas.")
+
+    st.markdown('</div>', unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True)
 
 
 
