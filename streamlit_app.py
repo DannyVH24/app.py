@@ -2,6 +2,7 @@ import streamlit as st
 import numpy as np
 import pandas as pd
 import math
+import statistics
 import matplotlib.pyplot as plt
 from scipy import stats
 from io import BytesIO
