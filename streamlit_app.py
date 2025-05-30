@@ -198,6 +198,8 @@ if st.session_state.get("sub_menu2") == "Medidas estadísticas":
         posicion = st.slider("Selecciona el percentil:", 1, 99, step=1)
         valor_percentil = posicion
 
+    mostrar_grafico = st.checkbox("📈 Mostrar gráfico")
+
     # Botón para calcular
     if st.button("Calcular"):
         try:
@@ -245,6 +247,26 @@ if st.session_state.get("sub_menu2") == "Medidas estadísticas":
                         <strong>Resultado:</strong> <span style="color:green;">{resultado:.4f}</span>
                         </div>
                     """, unsafe_allow_html=True)
+
+                # Mostrar gráfico si el usuario lo seleccionó
+                if mostrar_grafico:
+                    fig, ax = plt.subplots()
+
+                    if opcion in ["Media", "Mediana", "Moda"]:
+                        ax.hist(datos, bins='auto', color='skyblue', edgecolor='black')
+                        ax.set_title(f"Histograma de los datos ({opcion})")
+                        ax.set_xlabel("Valor")
+                        ax.set_ylabel("Frecuencia")
+
+                        ax.axvline(resultado, color='red', linestyle='dashed', linewidth=2)
+                        ax.text(resultado, plt.ylim()[1]*0.9, f'{opcion}: {resultado:.2f}', color='red')
+
+                    elif opcion in ["Cuartil", "Decil", "Percentil"]:
+                        ax.boxplot(datos, vert=False)
+                        ax.set_title(f"Boxplot de los datos ({opcion})")
+                        ax.set_xlabel("Valor")
+
+                    st.pyplot(fig)
 
         except ValueError:
             st.error("❌ Error: Asegúrate de ingresar solo números válidos separados por comas.")
