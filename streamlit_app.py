@@ -127,6 +127,15 @@ with col2:
     if st.button("📗 Estadística 2", key="estadistica2"):
         st.session_state["main_menu"] = "Estadística 2"
         st.session_state["sub_menu"] = None
+
+        # 🔁 Resetear submenú cuando cambia el menú principal
+if "last_main_menu" not in st.session_state:
+    st.session_state["last_main_menu"] = st.session_state["main_menu"]
+
+if st.session_state["main_menu"] != st.session_state["last_main_menu"]:
+    st.session_state["sub_menu2"] = None  # o el nombre correcto de tu submenú
+    st.session_state["last_main_menu"] = st.session_state["main_menu"]
+
 st.markdown('</div>', unsafe_allow_html=True)
 
 # Contenido según el menú
