@@ -15,7 +15,7 @@ from scipy.stats import f as f_dist
 st.set_page_config(layout="wide")
 
 
-# Estilos personalizados
+# Estilos personalizados.
 st.markdown("""
     <style>
         .title {
