@@ -44,44 +44,66 @@ def prioridad_alg(processes):
     return resultados
 
 def round_robin(processes, quantum=2):
-    tiempo_total = 0
     pendientes = [[p[0], p[1]] for p in processes]  # [Proceso, Tiempo restante]
-    suma_ejec = {p[0]: 0 for p in processes}       # Tiempo ejecutado acumulado por proceso
-    espera_total = {p[0]: 0 for p in processes}    # Tiempo de espera acumulado
+    tiempos_originales = {p[0]: p[1] for p in processes}
+    fin_proceso = {}
     rondas = []
     ronda_num = 1
+    tiempo_total = 0  # Tiempo global
 
     while pendientes:
         ronda_actual = []
         for p in pendientes[:]:
             nombre, tiempo_rest = p
-            ejec = min(tiempo_rest, quantum)
-            inicio = tiempo_total
-            tiempo_total += ejec
-            tiempo_rest -= ejec
 
-            espera_total[nombre] += inicio - suma_ejec[nombre]
-            suma_ejec[nombre] += ejec
+            # 🔹 Tiempo en el que inicia esta ejecución
+            ti = tiempo_total  
 
-            ronda_actual.append([nombre, ejec, inicio, tiempo_rest, suma_ejec[nombre]])
+            # ⚡ Si es el único proceso pendiente, se ejecuta todo
+            if len(pendientes) == 1:
+                ejec = tiempo_rest
+            else:
+                ejec = min(tiempo_rest, quantum)
 
-            if tiempo_rest == 0:
+            tr = tiempo_rest - ejec  
+            te = tiempo_total  # tiempo antes de ejecutar
+            tiempo_total += ejec  # avanzar reloj
+
+            # Guardar ejecución
+            ronda_actual.append([nombre, ti, ejec, tr, te])
+
+            # Terminado o pendiente
+            if tr == 0:
+                fin_proceso[nombre] = tiempo_total
                 pendientes.remove(p)
             else:
-                p[1] = tiempo_rest
+                p[1] = tr
+
         rondas.append((ronda_num, ronda_actual))
         ronda_num += 1
 
-    # Crear DataFrame con todas las rondas
-    df_rondas = []
-    for num, ronda in rondas:
-        for fila in ronda:
-            df_rondas.append([num] + fila)
-    df = pd.DataFrame(df_rondas, columns=["Ronda", "Proceso", "Quantum ejecutado", "Inicio", "Tiempo Restante", "Suma Ejecutada"])
-    
-    promedio_espera = sum(espera_total.values()) / len(espera_total)
-    return df, promedio_espera
+    # Calcular métricas finales
+    tiempos_retorno = {}
+    tiempos_espera_final = {}
+    for nombre in tiempos_originales:
+        tat = fin_proceso[nombre]  # Tiempo de finalización
+        espera = tat - tiempos_originales[nombre]  # Tiempo de espera total
+        tiempos_retorno[nombre] = tat
+        tiempos_espera_final[nombre] = espera
 
+    promedio_espera = sum(tiempos_espera_final.values()) / len(tiempos_espera_final)
+    promedio_retorno = sum(tiempos_retorno.values()) / len(tiempos_retorno)
+
+    # Crear lista de DataFrames por ronda
+    rondas_dfs = []
+    for num, ronda in rondas:
+        df = pd.DataFrame(
+            ronda,
+            columns=["P", "Ti", "t", "Tr", "te"]
+        )
+        rondas_dfs.append((num, df))
+
+    return rondas_dfs, promedio_espera, promedio_retorno
 
 # ---------------- INTERFAZ STREAMLIT ---------------- #
 st.set_page_config(page_title="Planificación de Procesos", page_icon="⚙️", layout="wide")
@@ -135,13 +157,17 @@ if st.button("Calcular"):
 
     # Round Robin
     st.markdown("### 🔹 Round Robin")
-    df_rr, rr_promedio = round_robin(procesos, quantum)
-    espera_promedios["Round Robin"] = rr_promedio
-    st.dataframe(df_rr, use_container_width=True)
-    st.metric("⏳ Tiempo de espera promedio", round(rr_promedio, 2))
+    rondas_dfs, rr_promedio_espera, rr_promedio_retorno = round_robin(procesos, quantum)
+
+    for num, df in rondas_dfs:
+        st.markdown(f"#### Ronda {num}")
+        st.dataframe(df, use_container_width=True)
+
+    espera_promedios["Round Robin"] = rr_promedio_espera
+    st.metric("⏳ Tiempo de espera promedio", round(rr_promedio_espera, 2))
+    st.metric("📌 Tiempo de retorno promedio", round(rr_promedio_retorno, 2))
     st.divider()
 
-    # Comparación final
     st.subheader("🏆 Algoritmo más óptimo")
     mejor = min(espera_promedios, key=espera_promedios.get)
     st.write(f"El algoritmo con menor tiempo de espera promedio es **{mejor}** con {round(espera_promedios[mejor],2)} unidades de tiempo.")
