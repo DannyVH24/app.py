@@ -26,15 +26,30 @@ st.markdown("""
     .line-error { background-color: rgba(248, 81, 73, 0.15); border-left: 4px solid #f85149; color: #ff7b72; }
     .line-number { color: #8b949e; margin-right: 15px; display: inline-block; width: 30px; text-align: right; }
     .scroll-history { max-height: 200px; overflow-y: auto; background-color: #0d1117; padding: 10px; border: 1px solid #30363d; font-family: monospace; color: #8b949e; }
+    
+    /* Estilos para el Footer */
+    .footer {
+        position: relative;
+        left: 0;
+        bottom: 0;
+        width: 100%;
+        background-color: #0d1117;
+        color: #8b949e;
+        text-align: center;
+        padding: 20px;
+        border-top: 1px solid #30363d;
+        margin-top: 50px;
+    }
+    .dev-name { color: #58a6ff; font-weight: bold; }
     </style>
 """, unsafe_allow_html=True)
 
-# --- ESTADO ---
+# --- ESTADO (Mantiene la funcionalidad intacta) ---
 if 'historial' not in st.session_state: st.session_state.historial = []
 if 'reset_key' not in st.session_state: st.session_state.reset_key = 0
 if 'codigo_master' not in st.session_state: st.session_state.codigo_master = ""
 
-# --- TOKENS ORIGINALES (ESTRICTOS) ---
+# --- MOTOR LÉXICO (TOKENS ORIGINALES) ---
 reservadas = {
     "entero": "T_TIPO_ENTERO", "decimal": "T_TIPO_DECIMAL", "texto": "T_TIPO_TEXTO",
     "si": "T_SI", "sino": "T_SINO", "entonces": "T_ENTONCES", "fin_si": "T_FIN_SI",
@@ -42,7 +57,6 @@ reservadas = {
     "imprimir": "T_IMPRIMIR", "Y": "T_OP_LOG", "O": "T_OP_LOG", "NO": "T_OP_LOG"
 }
 
-# Se regresó T_ID a la forma original que NO permite guiones bajos internos
 tokens_regex = [
     ("T_DECIMAL", r'[+-]?\d+\.\d+'),
     ("T_ENTERO", r'[+-]?\d+'),
@@ -54,35 +68,21 @@ tokens_regex = [
 ]
 
 def identificar_y_sugerir(simbolo, linea_completa):
-    """Analiza por qué el token falló según las reglas originales."""
-    
-    # Caso: Intento de usar guion bajo (como en fin_si)
     if simbolo == "_":
         if "fin" in linea_completa and "si" in linea_completa:
-            return "Error en palabra reservada: El lenguaje usa 'fin_si' como un token especial, pero tu regla de ID no permite guiones. Revisa la definicion de reservadas."
-        return "El guion bajo '_' no esta permitido en los identificadores segun las reglas actuales."
-    
-    # Caso: Identificador que empieza con número
+            return "Error en reservada: El lenguaje usa 'fin_si', pero tus reglas de ID no permiten guiones."
+        return "El guion bajo '_' no esta permitido en los identificadores."
     if simbolo.isdigit():
-        # Verificamos si lo que sigue es una letra (intento de ID inválido)
-        return "Los identificadores deben comenzar con una letra. No se permiten digitos al inicio."
-    
-    # Caso: Símbolos de otros lenguajes
+        return "Los identificadores deben comenzar con una letra."
     if simbolo in ['@', '#', '$', ';', '{', '}']:
-        return f"El simbolo '{simbolo}' es ajeno a la sintaxis de SimplePy. Por favor, eliminalo."
-    
-    # Caso: Cadena mal cerrada
-    if simbolo == '"':
-        return "Cadena de texto sin cerrar. Asegurate de usar comillas dobles al final."
-
-    return "Caracter no reconocido. Revisa espacios o caracteres especiales no permitidos."
+        return f"El simbolo '{simbolo}' no pertenece a SimplePy."
+    return "Caracter no reconocido. Revisa la sintaxis."
 
 def analizar(codigo):
     tokens, errores = [], []
     lineas = codigo.split("\n")
     contador = 1
     lineas_con_error = set()
-    
     for num_linea, linea in enumerate(lineas, start=1):
         linea_p = re.sub(r'//.*', '', linea) 
         pos = 0
@@ -90,7 +90,6 @@ def analizar(codigo):
             if re.match(r'\s', linea_p[pos]):
                 pos += 1
                 continue
-            
             match = None
             for tipo, regex in tokens_regex:
                 patron = re.compile(regex)
@@ -103,17 +102,10 @@ def analizar(codigo):
                     contador += 1
                     pos = match.end(0)
                     break
-            
             if not match:
                 simbolo_err = linea_p[pos]
-                # Aquí identificamos el error sin haber cambiado el token regex
                 sugerencia = identificar_y_sugerir(simbolo_err, linea)
-                errores.append({
-                    "Linea": num_linea,
-                    "Simbolo": simbolo_err,
-                    "Mensaje": "Error Lexico",
-                    "Sugerencia": sugerencia
-                })
+                errores.append({"Linea": num_linea, "Simbolo": simbolo_err, "Mensaje": "Error Lexico", "Sugerencia": sugerencia})
                 lineas_con_error.add(num_linea)
                 pos += 1
     return tokens, errores, lineas_con_error
@@ -152,7 +144,6 @@ if st.button("Traducir"):
     if txt.strip():
         tokens, errores, l_error = analizar(txt)
         st.session_state.historial.append({"fecha": datetime.now().strftime("%H:%M:%S"), "codigo": txt})
-
         if errores:
             st.subheader("Diagnostico de Errores")
             output = '<div style="background-color: #0d1117; padding:10px; border-radius:8px; border:1px solid #30363d;">'
@@ -160,12 +151,30 @@ if st.button("Traducir"):
                 css = "line-error" if i in l_error else ""
                 output += f'<div class="code-line {css}"><span class="line-number">{i}</span>{line}</div>'
             st.markdown(output + '</div>', unsafe_allow_html=True)
-
         t1, t2 = st.tabs(["Tabla de Simbolos", "Reporte Detallado"])
         with t1:
             if tokens: st.dataframe(pd.DataFrame(tokens), use_container_width=True, hide_index=True)
         with t2:
             if errores: st.table(pd.DataFrame(errores))
-            else: st.success("Codigo validado correctamente.")
+            else: st.success("Codigo validado.")
     else:
         st.warning("El editor esta vacio.")
+
+# --- FOOTER Y DERECHOS RESERVADOS ---
+st.markdown("---")
+col1, col2, col3 = st.columns([1, 2, 1])
+
+with col2:
+    # Intenta cargar la imagen, si no existe muestra el texto
+    try:
+        st.image("img/img-1.png", width=80)
+    except:
+        st.markdown("**(Logo SimplePy)**")
+    
+    st.markdown(f"""
+        <div class="footer">
+            <p>© {datetime.now().year} SimplePy Engine. Todos los derechos reservados.</p>
+            <p>Desarrollado por: <span class="dev-name">Danny Velásquez</span> & <span class="dev-name">André Herrera</span></p>
+            <p style="font-size: 0.8em;">Analizador Léxico v2.0 - Facultad de Ingeniería</p>
+        </div>
+    """, unsafe_allow_html=True)
