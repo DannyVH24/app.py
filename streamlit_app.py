@@ -1,23 +1,11 @@
+import streamlit as st
 import re
-import tkinter as tk
-from tkinter import ttk, scrolledtext
+import pandas as pd
 
 # =========================
-# TEMAS
+# CONFIGURACIÓN DE PÁGINA
 # =========================
-tema_oscuro = {
-    "bg": "#1e1e1e",
-    "fg": "#ffffff",
-    "editor": "#252526"
-}
-
-tema_claro = {
-    "bg": "#ffffff",
-    "fg": "#000000",
-    "editor": "#f5f5f5"
-}
-
-tema_actual = tema_oscuro
+st.set_page_config(page_title="SimplePy IDE", layout="wide")
 
 # =========================
 # PALABRAS RESERVADAS
@@ -40,7 +28,7 @@ reservadas = {
 }
 
 # =========================
-# TOKENS
+# TOKENS REGEX
 # =========================
 tokens_regex = [
     ("T_DECIMAL", r'[+-]?\d+\.\d+'),
@@ -53,209 +41,109 @@ tokens_regex = [
 ]
 
 # =========================
-# ANALIZADOR
+# ANALIZADOR LÓGICO
 # =========================
 def analizar(codigo):
     tokens = []
     errores = []
-    lineas_error = set()
     contador = 1
-
     lineas = codigo.split("\n")
 
     for num_linea, linea in enumerate(lineas, start=1):
-        linea = re.sub(r'//.*', '', linea)
+        linea_limpia = re.sub(r'//.*', '', linea)
         pos = 0
 
-        while pos < len(linea):
-
-            if re.match(r'\s', linea[pos]):
+        while pos < len(linea_limpia):
+            if re.match(r'\s', linea_limpia[pos]):
                 pos += 1
                 continue
 
             match = None
-
             for tipo, regex in tokens_regex:
                 patron = re.compile(regex)
-                match = patron.match(linea, pos)
+                match = patron.match(linea_limpia, pos)
 
                 if match:
                     lexema = match.group(0)
-
                     if tipo == "T_ID" and lexema in reservadas:
                         tipo = reservadas[lexema]
 
-                    tokens.append((contador, lexema, tipo))
+                    tokens.append({"N°": contador, "Lexema": lexema, "Token": tipo})
                     contador += 1
                     pos = match.end(0)
                     break
 
             if not match:
-                errores.append((
-                    len(errores)+1,
-                    f"Línea {num_linea}",
-                    f"Símbolo inválido: '{linea[pos]}'",
-                    "Verifica el carácter"
-                ))
-
-                lineas_error.add(num_linea)
+                errores.append({
+                    "N°": len(errores) + 1,
+                    "Descripción": f"Línea {num_linea}",
+                    "Detalle": f"Símbolo inválido: '{linea_limpia[pos]}'",
+                    "Sugerencia": "Verifica el carácter"
+                })
                 pos += 1
 
-    return tokens, errores, lineas_error
+    return tokens, errores
 
 # =========================
-# FUNCIONES UI
+# INTERFAZ STREAMLIT
 # =========================
-def ejecutar():
-    codigo = txt_codigo.get("1.0", tk.END)
-    tokens, errores, lineas_error = analizar(codigo)
+st.title("🚀 SimplePy IDE - Analizador Léxico")
 
-    # Limpiar tablas
-    for row in tabla_tokens.get_children():
-        tabla_tokens.delete(row)
+# Sidebar para controles
+with st.sidebar:
+    st.header("Controles")
+    btn_limpiar = st.button("🧹 Limpiar Todo")
+    st.info("Escribe tu código en el editor central y presiona 'Traducir'.")
 
-    for row in tabla_errores.get_children():
-        tabla_errores.delete(row)
+# Editor de Código
+if btn_limpiar:
+    st.session_state.codigo_input = ""
 
-    # Insertar tokens
-    for t in tokens:
-        tabla_tokens.insert("", tk.END, values=t)
-
-    # Insertar errores
-    for e in errores:
-        tabla_errores.insert("", tk.END, values=e)
-
-    # Resaltar errores
-    resaltar_errores(lineas_error)
-
-
-def limpiar():
-    txt_codigo.delete("1.0", tk.END)
-
-    for row in tabla_tokens.get_children():
-        tabla_tokens.delete(row)
-
-    for row in tabla_errores.get_children():
-        tabla_errores.delete(row)
-
-
-def cambiar_tema():
-    global tema_actual
-    tema_actual = tema_claro if tema_actual == tema_oscuro else tema_oscuro
-    aplicar_tema()
-
-
-# =========================
-# RESALTADO DE ERRORES
-# =========================
-def resaltar_errores(lineas_error):
-    txt_codigo.tag_remove("error", "1.0", tk.END)
-
-    for linea in lineas_error:
-        inicio = f"{linea}.0"
-        fin = f"{linea}.end"
-        txt_codigo.tag_add("error", inicio, fin)
-
-    txt_codigo.tag_config("error", background="red", foreground="white")
-
-    ventana.after(5000, limpiar_resaltado)
-
-
-def limpiar_resaltado():
-    txt_codigo.tag_remove("error", "1.0", tk.END)
-
-
-# =========================
-# TEMA
-# =========================
-def aplicar_tema():
-    ventana.configure(bg=tema_actual["bg"])
-
-    # Editor
-    txt_codigo.configure(
-        bg=tema_actual["editor"],
-        fg=tema_actual["fg"],
-        insertbackground=tema_actual["fg"]
-    )
-
-    # Labels
-    for widget in ventana.winfo_children():
-        if isinstance(widget, tk.Label):
-            widget.configure(bg=tema_actual["bg"], fg=tema_actual["fg"])
-
-    # Botones
-    for widget in toolbar.winfo_children():
-        if isinstance(widget, tk.Button):
-            widget.configure(
-                bg=tema_actual["editor"],
-                fg=tema_actual["fg"],
-                activebackground=tema_actual["bg"],
-                activeforeground=tema_actual["fg"]
-            )
-
-    # Tablas
-    style.configure("Treeview",
-        background=tema_actual["editor"],
-        foreground=tema_actual["fg"],
-        fieldbackground=tema_actual["editor"]
-    )
-
-    style.configure("Treeview.Heading",
-        background=tema_actual["bg"],
-        foreground=tema_actual["fg"]
-    )
-
-
-# =========================
-# INTERFAZ
-# =========================
-ventana = tk.Tk()
-ventana.title("SimplePy IDE")
-ventana.geometry("1000x650")
-
-# Estilo
-style = ttk.Style()
-style.theme_use("clam")
-
-# Toolbar
-toolbar = tk.Frame(ventana)
-toolbar.pack(fill="x")
-
-tk.Button(toolbar, text="▶ Traducir", command=ejecutar).pack(side="left", padx=5)
-tk.Button(toolbar, text="🌙/☀ Tema", command=cambiar_tema).pack(side="left", padx=5)
-tk.Button(toolbar, text="🧹 Limpiar", command=limpiar).pack(side="left", padx=5)
-
-# Editor
-tk.Label(ventana, text="Código SimplePy").pack()
-
-txt_codigo = scrolledtext.ScrolledText(ventana, height=10)
-txt_codigo.pack(fill="both", expand=True)
-
-# Tabla tokens
-tk.Label(ventana, text="Tabla de Símbolos").pack()
-
-tabla_tokens = ttk.Treeview(ventana, columns=("N°", "Lexema", "Token"), show="headings")
-tabla_tokens.heading("N°", text="N°")
-tabla_tokens.heading("Lexema", text="Lexema")
-tabla_tokens.heading("Token", text="Token")
-tabla_tokens.pack(fill="both", expand=True)
-
-# Tabla errores
-tk.Label(ventana, text="Errores Léxicos").pack()
-
-tabla_errores = ttk.Treeview(
-    ventana,
-    columns=("N°", "Descripción", "Detalle", "Sugerencia"),
-    show="headings"
+codigo_input = st.text_area(
+    "Código SimplePy", 
+    placeholder="Escribe tu código aquí...", 
+    height=250,
+    key="editor"
 )
 
-tabla_errores.heading("N°", text="N°")
-tabla_errores.heading("Descripción", text="Descripción")
-tabla_errores.heading("Detalle", text="Detalle")
-tabla_errores.heading("Sugerencia", text="Sugerencia")
-tabla_errores.pack(fill="both", expand=True)
+col1, col2 = st.columns([1, 5])
+with col1:
+    ejecutar = st.button("▶ Traducir", type="primary")
 
-# Aplicar tema inicial
-aplicar_tema()
+# Lógica de ejecución
+if ejecutar and codigo_input:
+    tokens, errores = analizar(codigo_input)
 
-ventana.mainloop()
+    # Mostrar Resultados
+    st.divider()
+    
+    tab1, tab2 = st.tabs(["📊 Tabla de Símbolos", "⚠️ Errores Léxicos"])
+
+    with tab1:
+        if tokens:
+            df_tokens = pd.DataFrame(tokens)
+            st.dataframe(df_tokens, use_container_width=True, hide_index=True)
+        else:
+            st.write("No se encontraron tokens.")
+
+    with tab2:
+        if errores:
+            st.error("Se detectaron errores en el código.")
+            df_errores = pd.DataFrame(errores)
+            st.table(df_errores)
+        else:
+            st.success("¡Código limpio! No se encontraron errores léxicos.")
+
+elif ejecutar and not codigo_input:
+    st.warning("Por favor, ingresa algún código para analizar.")
+
+# Footer estilo
+st.markdown("""
+<style>
+    .stTextArea textarea {
+        font-family: 'Source Code Pro', monospace;
+        background-color: #262730;
+        color: #00FF00;
+    }
+</style>
+""", unsafe_allow_html=True)
