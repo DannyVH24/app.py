@@ -2,6 +2,7 @@ import streamlit as st
 import re
 import pandas as pd
 from datetime import datetime
+import os
 
 # --- CONFIGURACIÓN DE PÁGINA ---
 st.set_page_config(page_title="SimplePy IDE", layout="wide")
@@ -25,108 +26,163 @@ st.markdown("""
     .code-line { font-family: 'Fira Code', monospace; display: block; padding: 2px 10px; white-space: pre-wrap; }
     .line-error { background-color: rgba(248, 81, 73, 0.15); border-left: 4px solid #f85149; color: #ff7b72; }
     .line-number { color: #8b949e; margin-right: 15px; display: inline-block; width: 30px; text-align: right; }
-    .scroll-history { max-height: 200px; overflow-y: auto; background-color: #0d1117; padding: 10px; border: 1px solid #30363d; font-family: monospace; color: #8b949e; }
     
-    /* Estilos para el Footer */
-    .footer {
-        position: relative;
-        left: 0;
-        bottom: 0;
-        width: 100%;
-        background-color: #0d1117;
-        color: #8b949e;
-        text-align: center;
+    .main-footer {
+        margin-top: 150px;
         padding: 20px;
         border-top: 1px solid #30363d;
-        margin-top: 50px;
+        text-align: center;
+        color: #8b949e;
+        font-size: 0.9em;
     }
     .dev-name { color: #58a6ff; font-weight: bold; }
+    
+    .logo-frame {
+        border: 2px solid #30363d;
+        padding: 10px;
+        border-radius: 10px;
+        text-align: center;
+        margin-bottom: 20px;
+        background-color: rgba(48, 54, 61, 0.2);
+    }
+    [data-testid="stSidebarNav"] { display: none; }
     </style>
 """, unsafe_allow_html=True)
 
-# --- ESTADO (Mantiene la funcionalidad intacta) ---
+# --- SUGERENCIA (PLACEHOLDER) ---
+sugerencia_ejemplo = """// Prueba aquí tus casos válidos o inválidos
+entero variable = 10
+texto msj = "Hola"
+// Ejemplo de error:
+entero 1variable = 5"""
+
+# --- ESTADO DE SESIÓN ---
 if 'historial' not in st.session_state: st.session_state.historial = []
 if 'reset_key' not in st.session_state: st.session_state.reset_key = 0
 if 'codigo_master' not in st.session_state: st.session_state.codigo_master = ""
 
-# --- MOTOR LÉXICO (TOKENS ORIGINALES) ---
+# --- MOTOR LÉXICO ---
 reservadas = {
     "entero": "T_TIPO_ENTERO", "decimal": "T_TIPO_DECIMAL", "texto": "T_TIPO_TEXTO",
     "si": "T_SI", "sino": "T_SINO", "entonces": "T_ENTONCES", "fin_si": "T_FIN_SI",
     "mientras": "T_MIENTRAS", "hacer": "T_HACER", "fin_mientras": "T_FIN_MIENTRAS",
-    "imprimir": "T_IMPRIMIR", "Y": "T_OP_LOG", "O": "T_OP_LOG", "NO": "T_OP_LOG"
+    "revisar": "T_REVISAR", "imprimir": "T_IMPRIMIR",
+    "Y": "T_OP_LOG", "O": "T_OP_LOG", "NO": "T_OP_LOG"
 }
 
+# Modificamos REGEX para evitar que números "absorban" parte de identificadores inválidos
 tokens_regex = [
-    ("T_DECIMAL", r'[+-]?\d+\.\d+'),
-    ("T_ENTERO", r'[+-]?\d+'),
-    ("T_CADENA", r'"[^"]*"'),
-    ("T_OP_REL", r'>=|<=|==|!=|>|<'),
-    ("T_OP_ARIT", r'\+|-|\*|/|='),
-    ("T_ID", r'[a-zA-Z][a-zA-Z0-9]*'), 
+    ("T_COMENTARIO", r'(//.*|#.*)'),             
+    ("T_DECIMAL", r'[+-]?[0-9]+\.[0-9]+'),       
+    ("T_ENTERO", r'[+-]?[0-9]+'),                
+    ("T_CADENA", r'"[^"\n]*"'),                    
+    ("T_OP_REL", r'>=|<=|==|!=|>|<'),            
+    ("T_OP_ARIT", r'\+|-|\*|/|='),               
+    ("T_ID", r'[a-zA-Z][a-zA-Z0-9_]*'),           
     ("T_PARENTESIS", r'\(|\)')
 ]
 
-def identificar_y_sugerir(simbolo, linea_completa):
-    if simbolo == "_":
-        if "fin" in linea_completa and "si" in linea_completa:
-            return "Error en reservada: El lenguaje usa 'fin_si', pero tus reglas de ID no permiten guiones."
-        return "El guion bajo '_' no esta permitido en los identificadores."
+def identificar_y_sugerir(simbolo, linea_restante):
+    """Diagnóstico detallado para el reporte estructurado"""
+    # Caso específico para Regla 6.1: Si empieza con número pero le siguen letras
+    if simbolo.isdigit() and any(c.isalpha() for c in linea_restante.split()[0] if linea_restante.strip()):
+        return "MOTIVO: Los identificadores deben iniciar con una letra. Violación de la Regla 6.1."
+    
     if simbolo.isdigit():
-        return "Los identificadores deben comenzar con una letra."
-    if simbolo in ['@', '#', '$', ';', '{', '}']:
-        return f"El simbolo '{simbolo}' no pertenece a SimplePy."
-    return "Caracter no reconocido. Revisa la sintaxis."
+        return "MOTIVO: Error de formación numérica o identificador mal declarado. Violación de la Regla 6.1 / 6.2."
+    
+    if simbolo == '"':
+        return "MOTIVO: Apertura de cadena sin cierre. Las cadenas no pueden abarcar múltiples líneas. Violación de la Regla 6.4."
+        
+    if re.match(r'\d*\.\.', simbolo + linea_restante):
+        return "MOTIVO: Estructura numérica inválida (doble punto decimal). Violación de la Regla 6.3."
+        
+    if simbolo in "$%&|?¿¡!":
+        return f"MOTIVO: El carácter '{simbolo}' no pertenece al alfabeto de SimplePy. Violación de la Regla 6.10."
+        
+    return "MOTIVO: Secuencia de caracteres no reconocida por las reglas del lenguaje."
 
 def analizar(codigo):
     tokens, errores = [], []
     lineas = codigo.split("\n")
     contador = 1
     lineas_con_error = set()
+    
     for num_linea, linea in enumerate(lineas, start=1):
-        linea_p = re.sub(r'//.*', '', linea) 
         pos = 0
-        while pos < len(linea_p):
-            if re.match(r'\s', linea_p[pos]):
+        while pos < len(linea):
+            # Ignorar espacios (Regla 6.9)
+            if linea[pos].isspace():
                 pos += 1
                 continue
+                
             match = None
             for tipo, regex in tokens_regex:
                 patron = re.compile(regex)
-                match = patron.match(linea_p, pos)
+                match = patron.match(linea, pos)
                 if match:
                     lexema = match.group(0)
+                    
+                    # --- VALIDACIÓN CRÍTICA REGLA 6.1 ---
+                    # Si detectamos un número, revisamos si el carácter inmediatamente posterior es una letra
+                    if tipo in ["T_ENTERO", "T_DECIMAL"]:
+                        fin_lexema = pos + len(lexema)
+                        if fin_lexema < len(linea) and (linea[fin_lexema].isalpha() or linea[fin_lexema] == '_'):
+                            # Es un error: Identificador empezando con número (ej: 1variable)
+                            match = None # Forzamos a que no haya match para que caiga en el bloque de error
+                            break 
+                    
+                    # Si el ID es en realidad una palabra reservada
                     if tipo == "T_ID" and lexema in reservadas:
                         tipo = reservadas[lexema]
-                    tokens.append({"N°": contador, "Lexema": lexema, "Token": tipo})
-                    contador += 1
+                    
+                    if tipo != "T_COMENTARIO":
+                        tokens.append({"N°": contador, "Lexema": lexema, "Token": tipo, "Linea": num_linea})
+                        contador += 1
                     pos = match.end(0)
                     break
+            
             if not match:
-                simbolo_err = linea_p[pos]
-                sugerencia = identificar_y_sugerir(simbolo_err, linea)
-                errores.append({"Linea": num_linea, "Simbolo": simbolo_err, "Mensaje": "Error Lexico", "Sugerencia": sugerencia})
+                simbolo_err = linea[pos]
+                # Capturamos un poco más de contexto para la sugerencia
+                contexto_error = linea[pos+1:pos+10]
+                errores.append({
+                    "Linea": num_linea, 
+                    "Simbolo": simbolo_err, 
+                    "Sugerencia del Error": identificar_y_sugerir(simbolo_err, contexto_error)
+                })
                 lineas_con_error.add(num_linea)
                 pos += 1
+                
     return tokens, errores, lineas_con_error
 
-# --- INTERFAZ ---
+# --- SIDEBAR ---
 with st.sidebar:
-    st.title("Controles")
+    st.markdown('<div class="logo-frame">', unsafe_allow_html=True)
+    ruta_logo = "img/img-1.png" if os.path.exists("img/img-1.png") else "img-1.png"
+    if os.path.exists(ruta_logo): 
+        st.image(ruta_logo, use_container_width=True)
+    else: 
+        st.subheader("SimplePy IDE")
+    st.markdown('</div>', unsafe_allow_html=True)
+    
+    st.header("Controles")
     if st.button("Limpiar Todo"):
         st.session_state.codigo_master = ""
         st.session_state.reset_key += 1
         st.rerun()
+        
     st.markdown("---")
-    st.subheader("Historial")
+    st.subheader("Historial de Sesiones")
     for i, item in enumerate(reversed(st.session_state.historial)):
         with st.expander(f"Sesion {item['fecha']}"):
-            st.markdown(f'<div class="scroll-history">{item["codigo"]}</div>', unsafe_allow_html=True)
-            if st.button("Cargar", key=f"h_{i}"):
+            st.code(item['codigo'], language="python")
+            if st.button("Cargar", key=f"btn_{i}"):
                 st.session_state.codigo_master = item['codigo']
                 st.session_state.reset_key += 1
                 st.rerun()
 
+# --- ÁREA PRINCIPAL ---
 st.header("SimplePy Engine")
 
 def sync_codigo():
@@ -135,6 +191,7 @@ def sync_codigo():
 codigo_actual = st.text_area(
     "Editor de Codigo", height=250, 
     value=st.session_state.codigo_master,
+    placeholder=sugerencia_ejemplo,
     key=f"ed_{st.session_state.reset_key}",
     on_change=sync_codigo
 )
@@ -143,38 +200,32 @@ if st.button("Traducir"):
     txt = st.session_state.codigo_master
     if txt.strip():
         tokens, errores, l_error = analizar(txt)
-        st.session_state.historial.append({"fecha": datetime.now().strftime("%H:%M:%S"), "codigo": txt})
+        if not st.session_state.historial or st.session_state.historial[-1]['codigo'] != txt:
+            st.session_state.historial.append({"fecha": datetime.now().strftime("%H:%M:%S"), "codigo": txt})
+        
         if errores:
-            st.subheader("Diagnostico de Errores")
+            st.subheader("⚠️ Diagnóstico de Errores")
             output = '<div style="background-color: #0d1117; padding:10px; border-radius:8px; border:1px solid #30363d;">'
-            for i, line in enumerate(txt.split('\n'), 1):
-                css = "line-error" if i in l_error else ""
-                output += f'<div class="code-line {css}"><span class="line-number">{i}</span>{line}</div>'
+            for j, line in enumerate(txt.split('\n'), 1):
+                css = "line-error" if j in l_error else ""
+                output += f'<div class="code-line {css}"><span class="line-number">{j}</span>{line}</div>'
             st.markdown(output + '</div>', unsafe_allow_html=True)
-        t1, t2 = st.tabs(["Tabla de Simbolos", "Reporte Detallado"])
+
+        t1, t2 = st.tabs(["Tabla de Símbolos", "Reporte Detallado de Errores"])
         with t1:
             if tokens: st.dataframe(pd.DataFrame(tokens), use_container_width=True, hide_index=True)
         with t2:
-            if errores: st.table(pd.DataFrame(errores))
-            else: st.success("Codigo validado.")
+            if errores: 
+                st.table(pd.DataFrame(errores))
+            else: 
+                st.success("Análisis léxico completado sin errores. El código cumple con todas las reglas.")
     else:
-        st.warning("El editor esta vacio.")
+        st.warning("El editor está vacío.")
 
-# --- FOOTER Y DERECHOS RESERVADOS ---
-st.markdown("---")
-col1, col2, col3 = st.columns([1, 2, 1])
-
-with col2:
-    # Intenta cargar la imagen, si no existe muestra el texto
-    try:
-        st.image("img/img-1.png", width=80)
-    except:
-        st.markdown("**(Logo SimplePy)**")
-    
-    st.markdown(f"""
-        <div class="footer">
-            <p>© {datetime.now().year} SimplePy Engine. Todos los derechos reservados.</p>
-            <p>Desarrollado por: <span class="dev-name">Danny Velásquez</span> & <span class="dev-name">André Herrera</span></p>
-            <p style="font-size: 0.8em;">Analizador Léxico v2.0 - Facultad de Ingeniería</p>
-        </div>
-    """, unsafe_allow_html=True)
+# --- FOOTER ---
+st.markdown(f"""
+    <div class="main-footer">
+        <p>© 2026 SimplePy Engine. Facultad de Ingeniería.</p>
+        <p>Desarrollado por: <span class="dev-name">Danny Velásquez</span> & <span class="dev-name">André Herrera</span></p>
+    </div>
+""", unsafe_allow_html=True)
