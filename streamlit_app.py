@@ -49,7 +49,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# --- SUGERENCIA (PLACEHOLDER) ---
+# --- PLACEHOLDER ---
 sugerencia_ejemplo = """// Prueba aquí tus casos válidos o inválidos
 entero variable = 10
 texto msj = "Hola"
@@ -159,7 +159,7 @@ def analizar(codigo):
 # --- SIDEBAR ---
 with st.sidebar:
     st.markdown('<div class="logo-frame">', unsafe_allow_html=True)
-    ruta_logo = "img/img-1.png" if os.path.exists("img/img-1.png") else "img-1.png"
+    ruta_logo = "img/img-1.jpeg" if os.path.exists("img/img-1.png") else "img-1.png"
     if os.path.exists(ruta_logo): 
         st.image(ruta_logo, use_container_width=True)
     else: 
